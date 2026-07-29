@@ -379,3 +379,28 @@ body { background-color: var(--bg-color); color: var(--text-main); overflow: hid
     font-size: 18px !important;
   }
 }
+/* Landscape Phones ONLY */
+@media (max-width: 950px) and (orientation: landscape) {
+  .lock-screen-container {
+    flex-direction: row !important;
+    height: 100dvh;
+    padding: 10px;
+    justify-content: space-evenly !important;
+  }
+  .lock-clock-container {
+    flex: 1;
+    margin-bottom: 0;
+  }
+  .lock-pin-container {
+    width: 320px;
+    padding: 15px;
+    margin: 0;
+  }
+  .lock-btn {
+    padding: 5px 0 !important; /* much smaller height for landscape phones */
+    font-size: 20px !important;
+  }
+  .lock-clock-time {
+    font-size: 45px !important;
+  }
+}
