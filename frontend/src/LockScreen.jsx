@@ -92,30 +92,12 @@ export default function LockScreen({ onLogin }) {
         )}
 
         {/* Teclado Numérico */}
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(3, 1fr)',
-          gap: '15px',
-          width: '100%'
-        }}>
+        <div className="lock-keypad-grid">
           {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(num => (
             <button
               key={num}
               onClick={() => handleKeyPress(num.toString())}
-              style={{
-                padding: '15px 0',
-                fontSize: '26px',
-                fontWeight: '700',
-                background: '#1e293b',
-                color: 'white',
-                border: 'none',
-                borderRadius: '16px',
-                cursor: 'pointer',
-                transition: 'all 0.1s'
-              }}
-              onMouseDown={e => e.currentTarget.style.background = '#334155'}
-              onMouseUp={e => e.currentTarget.style.background = '#1e293b'}
-              onMouseLeave={e => e.currentTarget.style.background = '#1e293b'}
+              className="lock-btn"
             >
               {num}
             </button>
@@ -123,42 +105,13 @@ export default function LockScreen({ onLogin }) {
           <div /> {/* Espacio vacío abajo a la izquierda */}
           <button
             onClick={() => handleKeyPress('0')}
-            style={{
-              padding: '15px 0',
-              fontSize: '26px',
-              fontWeight: '700',
-              background: '#1e293b',
-              color: 'white',
-              border: 'none',
-              borderRadius: '16px',
-              cursor: 'pointer',
-              transition: 'all 0.1s'
-            }}
-            onMouseDown={e => e.currentTarget.style.background = '#334155'}
-            onMouseUp={e => e.currentTarget.style.background = '#1e293b'}
-            onMouseLeave={e => e.currentTarget.style.background = '#1e293b'}
+            className="lock-btn"
           >
             0
           </button>
           <button
             onClick={handleDelete}
-            style={{
-              padding: '15px 0',
-              fontSize: '24px',
-              fontWeight: '700',
-              background: '#334155',
-              color: '#f8fafc',
-              border: 'none',
-              borderRadius: '16px',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              transition: 'all 0.1s'
-            }}
-            onMouseDown={e => e.currentTarget.style.background = '#ef4444'}
-            onMouseUp={e => e.currentTarget.style.background = '#334155'}
-            onMouseLeave={e => e.currentTarget.style.background = '#334155'}
+            className="lock-btn lock-btn-delete"
           >
             <Delete size={28} />
           </button>
