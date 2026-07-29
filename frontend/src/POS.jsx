@@ -188,7 +188,8 @@ export default function POS() {
     <div className="pos-container">
       {/* SECCIÓN IZQUIERDA: MENÚ Y PLATOS */}
       <div className="menu-section">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div className="sticky-header-container">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div className="header-title">CHIFERÍA POS</div>
           
           {/* Indicador de Usuario y Botón de Salir */}

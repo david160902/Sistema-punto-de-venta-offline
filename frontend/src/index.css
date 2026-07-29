@@ -15,7 +15,8 @@ body { background-color: var(--bg-color); color: var(--text-main); overflow: hid
 .pos-container { display: flex; height: 100vh; width: 100%; }
 
 /* Menú Izquierdo */
-.menu-section { flex: 1; min-height: 0; display: flex; flex-direction: column; padding: 20px; gap: 20px; overflow-y: auto; }
+.menu-section { flex: 1; min-height: 0; display: flex; flex-direction: column; overflow-y: auto; }
+.sticky-header-container { position: sticky; top: 0; z-index: 50; background: var(--bg-color); padding: 20px 20px 10px 20px; display: flex; flex-direction: column; gap: 20px; }
 .header-title { font-size: 26px; font-weight: 800; color: var(--accent); letter-spacing: 1px;}
 
 .categories-scroll { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 5px; }
@@ -25,7 +26,7 @@ body { background-color: var(--bg-color); color: var(--text-main); overflow: hid
 .cat-btn { background: var(--panel-bg); color: var(--text-muted); border: 2px solid transparent; padding: 14px 28px; border-radius: 14px; font-size: 18px; font-weight: 700; cursor: pointer; transition: 0.2s; white-space: nowrap; }
 .cat-btn.active { border-color: var(--accent); background: rgba(245, 158, 11, 0.15); color: var(--accent); }
 
-.products-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 18px; }
+.products-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 18px; padding: 10px 20px 20px 20px; }
 .product-card { background: var(--panel-bg); border-radius: 16px; padding: 20px; cursor: pointer; border: 1px solid var(--border); transition: transform 0.1s, border-color 0.2s; display: flex; flex-direction: column; gap: 12px; align-items: center; text-align: center; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
 .product-card:active { transform: scale(0.96); }
 .product-icon { width: 70px; height: 70px; background: #334155; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; color: var(--accent); }
@@ -421,7 +422,6 @@ body { background-color: var(--bg-color); color: var(--text-main); overflow: hid
     flex: 1 !important; /* Toma el 65% del espacio */
     height: auto !important;
     overflow-y: auto !important;
-    padding: 10px !important;
   }
   .cart-section {
     width: 100% !important;
@@ -437,18 +437,13 @@ body { background-color: var(--bg-color); color: var(--text-main); overflow: hid
   .pos-container {
     flex-direction: row !important; /* Lado a lado */
   }
-  .menu-section {
+  .sticky-header-container {
     padding: 10px !important;
     gap: 10px !important;
   }
   /* Categorías fijas en la parte superior para que no se pierdan al scrollear */
   .categories-scroll {
-    position: sticky !important;
-    top: 0;
-    z-index: 10;
-    background: var(--bg-color);
-    padding: 5px 0 10px 0 !important;
-    margin: 0 !important;
+    padding-bottom: 5px !important;
   }
   .header-title {
     display: none; /* Ocultar el título "Menú" para ahorrar espacio vital */
@@ -494,4 +489,8 @@ body { background-color: var(--bg-color); color: var(--text-main); overflow: hid
   .total-row {
     font-size: 18px !important;
   }
+}
+@media (max-width: 650px) {
+  .sticky-header-container { padding: 10px !important; gap: 10px !important; }
+  .products-grid { padding: 0 10px 10px 10px !important; }
 }
