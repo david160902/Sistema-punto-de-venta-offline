@@ -404,3 +404,31 @@ body { background-color: var(--bg-color); color: var(--text-main); overflow: hid
     font-size: 45px !important;
   }
 }
+/* Desktop y Tablets (Pantallas Grandes) */
+.cart-section {
+  width: 350px; /* Reducido de 420px a 350px para dejarle más espacio al menú en tablets */
+}
+
+/* Celulares (Modo Vertical) */
+@media (max-width: 650px) { /* Cambiado de 768 a 650 para no afectar tablets verticales */
+  .pos-container {
+    flex-direction: column;
+    height: 100dvh !important;
+    min-height: auto !important;
+    overflow: hidden;
+  }
+  .menu-section {
+    flex: 1 !important; /* Toma el 65% del espacio */
+    height: auto !important;
+    overflow-y: auto !important;
+    padding: 10px !important;
+  }
+  .cart-section {
+    width: 100% !important;
+    height: 35dvh !important; /* Reducido al 35% (antes 45%) para darle prioridad a los platos */
+    border-left: none !important;
+    border-top: 2px solid var(--border) !important;
+    display: flex !important;
+    flex-direction: column !important;
+  }
+}
