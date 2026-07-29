@@ -246,7 +246,7 @@ export default function POS() {
         </div>
 
         <div className="cart-items">
-          {cart.length === 0 && <div style={{textAlign:'center', color:'#94a3b8', marginTop:'80px', fontSize: '18px'}}>La orden está vacía.<br/>Toca un plato para agregarlo.</div>}
+          {cart.length === 0 && <div style={{textAlign:'center', color:'#94a3b8', margin: 'auto', fontSize: '18px'}}>La orden está vacía.<br/>Toca un plato para agregarlo.</div>}
           
           {cart.map(item => (
             <div key={item.cartId} className="cart-item" style={{ cursor: 'pointer' }} onClick={() => openEditModal(item)}>
