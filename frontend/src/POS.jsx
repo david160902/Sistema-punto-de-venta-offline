@@ -282,7 +282,7 @@ export default function POS() {
             disabled={cart.length === 0}
             onClick={() => setIsCheckout(true)}
           >
-            COBRAR E IMPRIMIR
+            COBRAR
           </button>
         </div>
       </div>

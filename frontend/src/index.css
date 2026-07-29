@@ -493,3 +493,7 @@ body { background-color: var(--bg-color); color: var(--text-main); overflow: hid
   .sticky-header-container { padding: 10px !important; gap: 10px !important; }
   .products-grid { padding: 0 10px 10px 10px !important; }
 }
+.cart-section { height: 100%; min-height: 0; }
+@media (max-width: 950px) {
+  .cart-header { display: none !important; }
+}
