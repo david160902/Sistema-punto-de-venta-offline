@@ -1,0 +1,26 @@
+{
+  "name": "sistema-pos",
+  "version": "1.0.0",
+  "description": "Punto de Venta",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build-exe": "electron-builder --win"
+  },
+  "build": {
+    "appId": "com.chifa.pos",
+    "productName": "Sistema POS",
+    "win": {
+      "target": "nsis"
+    },
+    "asar": false,
+    "extraResources": [
+      "backend/**/*"
+    ]
+  },
+  "devDependencies": {
+    "electron": "^43.2.0",
+    "electron-builder": "^26.15.3",
+    "wait-on": "^9.1.0"
+  }
+}

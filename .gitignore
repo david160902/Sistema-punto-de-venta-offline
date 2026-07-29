@@ -1,0 +1,5 @@
+node_modules/
+backend/pos.db
+backend/services/temp_ticket.txt
+.env
+dist/
