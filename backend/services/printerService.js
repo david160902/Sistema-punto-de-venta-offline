@@ -12,14 +12,18 @@ function printTicket(ticketNumber, orderData, settings = {}) {
     ticketContent += `          SISTEMA POS CHIFERIA         \n`;
     ticketContent += `      Av. Siempre Viva 123             \n`;
     ticketContent += `----------------------------------------\n`;
-    ticketContent += ` TICKET N°: ${String(ticketNumber).padStart(4, '0')}          TIPO: ${orderData.order_type}\n`;
+    ticketContent += ` TICKET #: ${String(ticketNumber).padStart(4, '0')}          TIPO: ${orderData.order_type}\n`;
     ticketContent += ` FECHA: ${new Date().toLocaleString()}\n`;
     ticketContent += `----------------------------------------\n`;
     
     if (orderData.items && orderData.items.length > 0) {
         orderData.items.forEach(item => {
-            ticketContent += ` ${item.qty}x ${item.name.substring(0, 18).padEnd(20)} S/ ${item.price.toFixed(2)}\n`;
-            if(item.notes) ticketContent += `    * ${item.notes}\n`;
+            let itemName = item.name.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+            ticketContent += ` ${item.qty}x ${itemName.substring(0, 18).padEnd(20)} S/ ${item.price.toFixed(2)}\n`;
+            if(item.notes) {
+                let note = item.notes.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+                ticketContent += `    * ${note}\n`;
+            }
         });
     } else {
         ticketContent += ` (Sin productos en la bolsa)\n`;
@@ -31,12 +35,13 @@ function printTicket(ticketNumber, orderData, settings = {}) {
     
     if (orderData.order_type === 'DELIVERY') {
         ticketContent += `----------------------------------------\n`;
-        ticketContent += ` CLIENTE: ${orderData.customer_name || 'Sin Nombre'}\n`;
-        ticketContent += ` TEL:     ${orderData.customer_phone || 'Sin Teléfono'}\n`;
+        let cName = (orderData.customer_name || 'Sin Nombre').normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        ticketContent += ` CLIENTE: ${cName}\n`;
+        ticketContent += ` TEL:     ${orderData.customer_phone || 'Sin Telefono'}\n`;
     }
     
     ticketContent += `----------------------------------------\n`;
-    ticketContent += `         ¡Gracias por su compra!        \n`;
+    ticketContent += `       *** Gracias por su compra ***    \n`;
     ticketContent += "\n\n\n\n"; // Espacio para el corte
 
     // 1. Mostrar simulación en Consola
@@ -54,7 +59,7 @@ function printTicket(ticketNumber, orderData, settings = {}) {
         
         // Usar PowerShell para mandar el texto plano a la cola de la impresora
         // Importante: Dependiendo del driver, podría interpretar texto plano.
-        const command = `powershell.exe -Command "Get-Content '${tempFilePath}' | Out-Printer -Name '${printerName}'"`;
+        const command = `powershell.exe -Command "Get-Content -Encoding UTF8 '${tempFilePath}' | Out-Printer -Name '${printerName}'"`;
         
         exec(command, (error, stdout, stderr) => {
             if (error) {
