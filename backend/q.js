@@ -1,0 +1,1 @@
+const sqlite3 = require('sqlite3').verbose(); const db = new sqlite3.Database('./db/pos.db'); db.all('SELECT created_at, datetime(created_at, \'localtime\') as local_c, date(\'now\', \'localtime\') as local_now FROM orders', (err, rows) => console.log(rows));
