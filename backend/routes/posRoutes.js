@@ -47,8 +47,8 @@ router.post('/order', (req, res) => {
     
     // 1. La PC es el embudo: Registra la orden y auto-genera el Ticket #
     db.run(
-        `INSERT INTO orders (ticket_number, order_type, payment_method, total, driver_id, user_id) 
-         VALUES ((SELECT IFNULL(MAX(ticket_number), 0) + 1 FROM orders), ?, ?, ?, ?, ?)`,
+        `INSERT INTO orders (ticket_number, order_type, payment_method, total, driver_id, user_id, created_at) 
+         VALUES ((SELECT IFNULL(MAX(ticket_number), 0) + 1 FROM orders), ?, ?, ?, ?, ?, datetime('now', 'localtime'))`,
         [order_type, payment_method, total, driver_id, user_id || null],
         function(err) {
             if (err) return res.status(500).json({ error: "Error al guardar orden: " + err.message });

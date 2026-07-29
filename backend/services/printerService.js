@@ -13,7 +13,7 @@ function printTicket(ticketNumber, orderData, settings = {}) {
     ticketContent += `      Av. Siempre Viva 123             \n`;
     ticketContent += `----------------------------------------\n`;
     ticketContent += ` TICKET #: ${String(ticketNumber).padStart(4, '0')}          TIPO: ${orderData.order_type}\n`;
-    ticketContent += ` FECHA: ${new Date().toLocaleString()}\n`;
+    ticketContent += ` FECHA: ${new Date().toLocaleString("es-PE", { timeZone: "America/Lima" })}\n`;
     ticketContent += `----------------------------------------\n`;
     
     if (orderData.items && orderData.items.length > 0) {
