@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Receipt, TrendingUp, Users, DollarSign, Activity } from 'lucide-react';
+import { Receipt, TrendingUp, Users, DollarSign, Activity, X } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 export default function Dashboard() {
@@ -19,7 +19,10 @@ export default function Dashboard() {
   const [filterPayment, setFilterPayment] = useState('');
   const [filterType, setFilterType] = useState('');
 
-  useEffect(() => {
+  // Modal de Detalle
+  const [selectedOrder, setSelectedOrder] = useState(null);
+
+  const loadData = () => {
     fetch(`http://${window.location.hostname}:3000/api/pos/orders?period=${period}`)
       .then(res => res.json())
       .then(data => {
@@ -33,12 +36,26 @@ export default function Dashboard() {
         if (data.orders) setOrders(data.orders);
         if (data.workers) setWorkers(data.workers);
         if (data.chartData) {
-          // Si es por día, agregamos ":00" a la hora para que se vea bonito. Si es otro periodo, se usa el nombre tal cual.
           setHourlyData(data.chartData.map(h => ({ name: period === 'day' ? h.name : h.name, ventas: h.sales })));
         }
       })
       .catch(console.error);
+  };
+
+  useEffect(() => {
+    loadData();
+    const interval = setInterval(loadData, 5000); // Refrescar cada 5 segundos
+    return () => clearInterval(interval);
   }, [period]);
+
+  const viewOrderDetails = (order) => {
+    fetch(`http://${window.location.hostname}:3000/api/pos/orders/${order.id}`)
+      .then(res => res.json())
+      .then(data => {
+        setSelectedOrder(data);
+      })
+      .catch(console.error);
+  };
 
   const filteredOrders = orders.filter(o => {
     if (searchTicket && !String(o.ticket_number).includes(searchTicket)) return false;
@@ -211,7 +228,13 @@ export default function Dashboard() {
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
               {filteredOrders.map(order => (
-                <div key={order.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#0f172a', padding: '15px 20px', borderRadius: '10px', border: '1px solid #334155' }}>
+                <div 
+                  key={order.id} 
+                  onClick={() => viewOrderDetails(order)}
+                  style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#0f172a', padding: '15px 20px', borderRadius: '10px', border: '1px solid #334155', cursor: 'pointer', transition: '0.2s' }}
+                  onMouseEnter={(e) => e.currentTarget.style.borderColor = '#3b82f6'}
+                  onMouseLeave={(e) => e.currentTarget.style.borderColor = '#334155'}
+                >
                   <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
                     <div style={{ background: 'rgba(245, 158, 11, 0.1)', padding: '10px', borderRadius: '10px', color: '#f59e0b' }}>
                       <Receipt size={24} />
@@ -237,6 +260,67 @@ export default function Dashboard() {
           )}
         </div>
       )}
+
+      {/* Modal de Detalle de Recibo */}
+      {selectedOrder && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
+          background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000
+        }}>
+          <div style={{
+            background: '#1e293b', padding: '30px', borderRadius: '20px', width: '500px',
+            border: '1px solid #334155', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.5)'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #334155', paddingBottom: '15px', marginBottom: '20px' }}>
+              <h2 style={{ margin: 0, color: '#f8fafc', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <Receipt size={24} color="#3b82f6" /> 
+                Detalle del Ticket #{String(selectedOrder.ticket_number).padStart(4, '0')}
+              </h2>
+              <button onClick={() => setSelectedOrder(null)} style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer' }}>
+                <X size={24} />
+              </button>
+            </div>
+            
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '25px', color: '#cbd5e1', fontSize: '15px' }}>
+              <div><strong>Fecha:</strong> {new Date(selectedOrder.created_at).toLocaleString()}</div>
+              <div><strong>Tipo:</strong> {selectedOrder.order_type}</div>
+              <div><strong>Pago:</strong> {selectedOrder.payment_method}</div>
+              <div><strong>Cajero:</strong> {selectedOrder.worker_name || 'Admin'}</div>
+            </div>
+
+            <div style={{ background: '#0f172a', borderRadius: '12px', padding: '15px', maxHeight: '250px', overflowY: 'auto' }}>
+              {selectedOrder.items && selectedOrder.items.length > 0 ? (
+                selectedOrder.items.map(item => (
+                  <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px dashed #334155', padding: '10px 0' }}>
+                    <div>
+                      <div style={{ fontWeight: 'bold', color: '#f8fafc' }}>{item.quantity}x {item.product_name}</div>
+                      {item.notes && <div style={{ fontSize: '13px', color: '#f59e0b', marginTop: '4px' }}>* {item.notes}</div>}
+                    </div>
+                    <div style={{ fontWeight: 'bold', color: '#10b981' }}>S/ {item.subtotal.toFixed(2)}</div>
+                  </div>
+                ))
+              ) : (
+                <div style={{ color: '#94a3b8', textAlign: 'center', padding: '20px 0' }}>
+                  Este recibo se generó antes de implementar el guardado de detalles.
+                </div>
+              )}
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '20px', paddingTop: '20px', borderTop: '1px solid #334155' }}>
+              <div style={{ fontSize: '18px', color: '#94a3b8' }}>Total Pagado:</div>
+              <div style={{ fontSize: '28px', fontWeight: '900', color: '#10b981' }}>S/ {selectedOrder.total.toFixed(2)}</div>
+            </div>
+            
+            <button 
+              onClick={() => setSelectedOrder(null)}
+              style={{ width: '100%', padding: '15px', marginTop: '25px', borderRadius: '12px', border: 'none', background: '#3b82f6', color: '#fff', fontWeight: 'bold', fontSize: '16px', cursor: 'pointer' }}
+            >
+              Cerrar Detalle
+            </button>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }

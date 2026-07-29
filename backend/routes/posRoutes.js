@@ -55,6 +55,15 @@ router.post('/order', (req, res) => {
             
             const newOrderId = this.lastID;
             
+            // Insertar los productos de la orden en order_items
+            if (items && items.length > 0) {
+                const stmt = db.prepare(`INSERT INTO order_items (order_id, product_id, quantity, unit_price, subtotal, notes) VALUES (?, ?, ?, ?, ?, ?)`);
+                items.forEach(item => {
+                    stmt.run([newOrderId, item.id, item.qty, item.price, item.qty * item.price, item.notes || null]);
+                });
+                stmt.finalize();
+            }
+            
             // 2. Extraemos el Número de Ticket que se acaba de crear (Ej. 001)
             db.get("SELECT ticket_number FROM orders WHERE id = ?", [newOrderId], (err, row) => {
                 const ticketNumber = row.ticket_number;
@@ -86,25 +95,24 @@ router.get('/orders', (req, res) => {
     let chartGroup = "";
     let chartSelect = "";
     
+    // NOTA: created_at ya está guardado en localtime, por lo que NO se debe usar datetime(created_at, 'localtime')
+    // porque SQLite pensará que es UTC y le restará otras 5 horas (causando que se muestre como 12:00 en lugar de 17:00).
     if (period === 'day') {
-        dateCondition = "date(datetime(created_at, 'localtime')) = date('now', 'localtime')";
-        chartSelect = "strftime('%H:00', datetime(created_at, 'localtime')) as name";
-        chartGroup = "strftime('%H', datetime(created_at, 'localtime'))";
+        dateCondition = "date(created_at) = date('now', 'localtime')";
+        chartSelect = "strftime('%H:00', created_at) as name";
+        chartGroup = "strftime('%H', created_at)";
     } else if (period === 'week') {
-        // En SQLite 'now', 'weekday 0' etc se puede usar para la semana. 
-        // Una forma sencilla es usar el número de semana del año (%W)
-        dateCondition = "strftime('%W', datetime(created_at, 'localtime')) = strftime('%W', 'now', 'localtime') AND strftime('%Y', datetime(created_at, 'localtime')) = strftime('%Y', 'now', 'localtime')";
-        // Devolvemos el día de la semana (0-6) o simplemente la fecha
-        chartSelect = "date(datetime(created_at, 'localtime')) as name";
-        chartGroup = "date(datetime(created_at, 'localtime'))";
+        dateCondition = "strftime('%W', created_at) = strftime('%W', 'now', 'localtime') AND strftime('%Y', created_at) = strftime('%Y', 'now', 'localtime')";
+        chartSelect = "date(created_at) as name";
+        chartGroup = "date(created_at)";
     } else if (period === 'month') {
-        dateCondition = "strftime('%Y-%m', datetime(created_at, 'localtime')) = strftime('%Y-%m', 'now', 'localtime')";
-        chartSelect = "date(datetime(created_at, 'localtime')) as name";
-        chartGroup = "date(datetime(created_at, 'localtime'))";
+        dateCondition = "strftime('%Y-%m', created_at) = strftime('%Y-%m', 'now', 'localtime')";
+        chartSelect = "date(created_at) as name";
+        chartGroup = "date(created_at)";
     } else if (period === 'all') {
         dateCondition = "1=1";
-        chartSelect = "strftime('%Y-%m', datetime(created_at, 'localtime')) as name";
-        chartGroup = "strftime('%Y-%m', datetime(created_at, 'localtime'))";
+        chartSelect = "strftime('%Y-%m', created_at) as name";
+        chartGroup = "strftime('%Y-%m', created_at)";
     }
 
     // 1. Resumen de KPIs
@@ -136,8 +144,8 @@ router.get('/orders', (req, res) => {
         ORDER BY o.created_at DESC
     `;
 
-    // 4. Lista de trabajadores (para filtros)
-    const workersQuery = "SELECT id, username as name FROM users";
+    // 4. Lista de trabajadores activos (para filtros)
+    const workersQuery = "SELECT id, username as name FROM users WHERE active = 1";
 
     db.get(kpiQuery, [], (err, summary) => {
         if (err) return res.status(500).json({ error: err.message });
@@ -157,6 +165,35 @@ router.get('/orders', (req, res) => {
                     });
                 });
             });
+        });
+    });
+});
+
+// ENDPOINT: Obtener detalle de un recibo específico
+router.get('/orders/:id', (req, res) => {
+    const orderId = req.params.id;
+    
+    // Obtener la cabecera de la orden
+    db.get(`
+        SELECT o.*, u.username as worker_name 
+        FROM orders o 
+        LEFT JOIN users u ON o.user_id = u.id 
+        WHERE o.id = ?
+    `, [orderId], (err, order) => {
+        if (err) return res.status(500).json({ error: err.message });
+        if (!order) return res.status(404).json({ error: 'Recibo no encontrado' });
+
+        // Obtener los productos (items) de la orden
+        db.all(`
+            SELECT oi.*, p.name as product_name
+            FROM order_items oi
+            JOIN products p ON oi.product_id = p.id
+            WHERE oi.order_id = ?
+        `, [orderId], (err, items) => {
+            if (err) return res.status(500).json({ error: err.message });
+            
+            order.items = items || [];
+            res.json(order);
         });
     });
 });
