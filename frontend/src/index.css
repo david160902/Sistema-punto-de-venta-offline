@@ -14,7 +14,7 @@ body { background-color: var(--bg-color); color: var(--text-main); overflow: hid
 
 .pos-container { display: flex; height: 100vh; height: 100dvh; width: 100%; overflow: hidden; }
 
-/* Menú Izquierdo */
+
 .menu-section { flex: 1; min-height: 0; display: flex; flex-direction: column; overflow-y: auto; }
 .sticky-header-container { position: sticky; top: 0; z-index: 999 !important; background: var(--bg-color); padding: 20px 20px 10px 20px; display: flex; flex-direction: column; gap: 20px; box-shadow: 0 4px 6px -4px rgba(0,0,0,0.5); }
 .header-title { font-size: 26px; font-weight: 800; color: var(--accent); letter-spacing: 1px;}
@@ -33,7 +33,7 @@ body { background-color: var(--bg-color); color: var(--text-main); overflow: hid
 .product-name { font-weight: 700; font-size: 16px; line-height: 1.3; }
 .product-price { color: var(--success); font-weight: 800; font-size: 18px; }
 
-/* Carrito Derecho */
+
 .cart-section { width: 420px; background: var(--panel-bg); border-left: 1px solid var(--border); display: flex; flex-direction: column; box-shadow: -4px 0 15px rgba(0,0,0,0.3); }
 .cart-header { padding: 25px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
 .cart-title { font-size: 22px; font-weight: 800; }
@@ -52,7 +52,7 @@ body { background-color: var(--bg-color); color: var(--text-main); overflow: hid
 .checkout-btn:active { transform: scale(0.98); }
 .checkout-btn:disabled { background: var(--border); color: var(--text-muted); cursor: not-allowed; }
 
-/* Modal Cobrar */
+
 .modal-overlay { position: fixed; top:0; left:0; right:0; bottom:0; background: rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; z-index: 9999 !important; padding: 20px; backdrop-filter: blur(4px); }
 .modal-content { background: var(--panel-bg); padding: 35px; border-radius: 24px; width: 500px; display: flex; flex-direction: column; gap: 20px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); border: 1px solid var(--border); max-height: 90vh; overflow-y: auto; }
 .modal-title { font-size: 26px; font-weight: 800; border-bottom: 1px solid var(--border); padding-bottom: 15px; color: var(--accent); }
@@ -73,7 +73,7 @@ body { background-color: var(--bg-color); color: var(--text-main); overflow: hid
 .btn-confirm { flex: 2; padding: 18px; background: var(--success); color: white; border: none; border-radius: 12px; font-size: 18px; font-weight: 800; cursor: pointer; }
 .btn-confirm:active { transform: scale(0.98); }
 
-/* Sidebar Administrador (PC Central) */
+
 .admin-container { display: flex; height: 100vh; width: 100vw; background: var(--bg-color); }
 .sidebar { width: 260px; background: var(--panel-bg); border-right: 1px solid var(--border); display: flex; flex-direction: column; }
 .sidebar-logo { padding: 25px; font-size: 22px; font-weight: 900; color: var(--accent); border-bottom: 1px solid var(--border); letter-spacing: 1px;}
@@ -83,10 +83,10 @@ body { background-color: var(--bg-color); color: var(--text-main); overflow: hid
 .nav-link.active { background: var(--accent); color: #000; }
 .admin-content { flex: 1; overflow-y: auto; overflow-x: hidden; position: relative; }
 
-/* Tarjetas Admin */
+
 .product-card-admin { background: var(--panel-bg); border-radius: 16px; overflow: hidden; border: 1px solid var(--border); cursor: pointer; display: flex; flex-direction: column; transition: all 0.2s ease-in-out; }
 .product-card-admin:hover { transform: translateY(-5px); box-shadow: 0 10px 20px -5px rgba(0,0,0,0.5); border-color: var(--accent); }
-/* Responsive Lock Screen */
+
 .lock-screen-container {
   height: 100vh;
   width: 100%;
@@ -151,7 +151,7 @@ body { background-color: var(--bg-color); color: var(--text-main); overflow: hid
     font-size: 18px;
   }
 }
-/* Responsive Admin Login */
+
 .admin-login-container {
   height: 100vh;
   width: 100vw;
@@ -179,13 +179,13 @@ body { background-color: var(--bg-color); color: var(--text-main); overflow: hid
     padding: 30px 20px;
   }
 }
-/* Global Responsiveness */
+
 @media (max-width: 768px) {
   body {
-    overflow: auto !important; /* Permitir scroll en móviles */
+    overflow: auto !important; 
   }
   
-  /* POS Layout */
+  
   .pos-container {
     flex-direction: column;
     height: 100vh;
@@ -218,14 +218,14 @@ body { background-color: var(--bg-color); color: var(--text-main); overflow: hid
     font-size: 14px;
   }
 
-  /* Modales */
+  
   .modal-content {
     width: 95%;
     padding: 20px;
   }
 }
 
-/* Landscape Phones */
+
 @media (max-height: 500px) and (orientation: landscape) {
   .lock-screen-container {
     flex-direction: row;
@@ -239,7 +239,7 @@ body { background-color: var(--bg-color); color: var(--text-main); overflow: hid
     font-size: 45px !important;
   }
 }
-/* Admin Dashboard Responsiveness */
+
 @media (max-width: 768px) {
   .admin-container {
     flex-direction: column;
@@ -265,12 +265,12 @@ body { background-color: var(--bg-color); color: var(--text-main); overflow: hid
     height: auto;
     overflow-y: visible;
   }
-  /* Tablas responsivas */
+  
   .table-responsive {
     overflow-x: auto;
   }
 }
-/* Fix LockScreen UI */
+
 .lock-keypad-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -307,27 +307,27 @@ body { background-color: var(--bg-color); color: var(--text-main); overflow: hid
 
 @media (max-width: 768px) {
   .lock-screen-container {
-    height: 100dvh; /* Usa dynamic viewport height para no cortarse en Safari/Chrome */
-    gap: 15px;      /* Menos separación entre el reloj y el teclado */
+    height: 100dvh; 
+    gap: 15px;      
     padding: 15px;
-    justify-content: flex-start; /* Empujar hacia arriba */
+    justify-content: flex-start; 
     padding-top: 40px;
   }
   .lock-pin-container {
     padding: 20px;
     width: 100%;
-    max-width: 320px; /* Mas estrecho para celulares pequeños */
+    max-width: 320px; 
     margin: 0 auto;
   }
   .lock-keypad-grid {
-    gap: 10px; /* Botones más juntos */
+    gap: 10px; 
   }
   .lock-btn {
-    padding: 10px 0; /* Menos alto para que quepan completos */
+    padding: 10px 0; 
     font-size: 22px;
   }
   .lock-clock-time {
-    font-size: 40px !important; /* Reloj más pequeño para dejar espacio */
+    font-size: 40px !important; 
   }
   .lock-clock-date {
     font-size: 16px !important;
@@ -347,18 +347,18 @@ body { background-color: var(--bg-color); color: var(--text-main); overflow: hid
 @media (max-width: 768px) {
   .pos-container {
     flex-direction: column;
-    height: 100dvh !important; /* Volvemos a fijar a la pantalla */
+    height: 100dvh !important; 
     min-height: auto !important;
     overflow: hidden;
   }
   .menu-section {
-    flex: 1 !important; /* Toma el espacio superior (aprox 55%) */
+    flex: 1 !important; 
     height: auto !important;
     overflow-y: auto !important;
   }
   .cart-section {
     width: 100% !important;
-    height: 45dvh !important; /* Toma el 45% inferior de la pantalla */
+    height: 45dvh !important; 
     border-left: none !important;
     border-top: 2px solid var(--border) !important;
     display: flex !important;
@@ -380,7 +380,7 @@ body { background-color: var(--bg-color); color: var(--text-main); overflow: hid
     font-size: 18px !important;
   }
 }
-/* Landscape Phones ONLY */
+
 @media (max-width: 950px) and (orientation: landscape) {
   .lock-screen-container {
     flex-direction: row !important;
@@ -398,20 +398,20 @@ body { background-color: var(--bg-color); color: var(--text-main); overflow: hid
     margin: 0;
   }
   .lock-btn {
-    padding: 5px 0 !important; /* much smaller height for landscape phones */
+    padding: 5px 0 !important; 
     font-size: 20px !important;
   }
   .lock-clock-time {
     font-size: 45px !important;
   }
 }
-/* Desktop y Tablets (Pantallas Grandes) */
+
 .cart-section {
-  width: 350px; /* Reducido de 420px a 350px para dejarle más espacio al menú en tablets */
+  width: 350px; 
 }
 
-/* Celulares (Modo Vertical) */
-@media (max-width: 650px) { /* Cambiado de 768 a 650 para no afectar tablets verticales */
+
+@media (max-width: 650px) { 
   .pos-container {
     flex-direction: column;
     height: 100dvh !important;
@@ -419,40 +419,40 @@ body { background-color: var(--bg-color); color: var(--text-main); overflow: hid
     overflow: hidden;
   }
   .menu-section {
-    flex: 1 !important; /* Toma el 65% del espacio */
+    flex: 1 !important; 
     height: auto !important;
     overflow-y: auto !important;
   }
   .cart-section {
     width: 100% !important;
-    height: 35dvh !important; /* Reducido al 35% (antes 45%) para darle prioridad a los platos */
+    height: 35dvh !important; 
     border-left: none !important;
     border-top: 2px solid var(--border) !important;
     display: flex !important;
     flex-direction: column !important;
   }
 }
-/* POS Horizontal en Celulares (Pantallas de poca altura) */
+
 @media (max-height: 550px) and (orientation: landscape) {
   .pos-container {
-    flex-direction: row !important; /* Lado a lado */
+    flex-direction: row !important; 
   }
   .sticky-header-container {
     padding: 10px !important;
     gap: 10px !important;
   }
-  /* Categorías fijas en la parte superior para que no se pierdan al scrollear */
+  
   .categories-scroll {
     padding-bottom: 5px !important;
   }
   .header-title {
-    display: none; /* Ocultar el título "Menú" para ahorrar espacio vital */
+    display: none; 
   }
   .cat-btn {
     padding: 8px 16px !important;
     font-size: 14px !important;
   }
-  /* Productos más compactos */
+  
   .products-grid {
     grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)) !important;
     gap: 10px !important;
@@ -472,7 +472,7 @@ body { background-color: var(--bg-color); color: var(--text-main); overflow: hid
   .product-price {
     font-size: 14px !important;
   }
-  /* Carrito a la derecha, pero más delgado */
+  
   .cart-section {
     width: 260px !important;
   }
