@@ -16,7 +16,7 @@ body { background-color: var(--bg-color); color: var(--text-main); overflow: hid
 
 /* Menú Izquierdo */
 .menu-section { flex: 1; min-height: 0; display: flex; flex-direction: column; overflow-y: auto; }
-.sticky-header-container { position: sticky; top: 0; z-index: 50; background: var(--bg-color); padding: 20px 20px 10px 20px; display: flex; flex-direction: column; gap: 20px; }
+.sticky-header-container { position: sticky; top: 0; z-index: 999 !important; background: var(--bg-color); padding: 20px 20px 10px 20px; display: flex; flex-direction: column; gap: 20px; box-shadow: 0 4px 6px -4px rgba(0,0,0,0.5); }
 .header-title { font-size: 26px; font-weight: 800; color: var(--accent); letter-spacing: 1px;}
 
 .categories-scroll { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 5px; }
@@ -27,8 +27,8 @@ body { background-color: var(--bg-color); color: var(--text-main); overflow: hid
 .cat-btn.active { border-color: var(--accent); background: rgba(245, 158, 11, 0.15); color: var(--accent); }
 
 .products-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 18px; padding: 10px 20px 20px 20px; }
-.product-card { background: var(--panel-bg); border-radius: 16px; padding: 20px; cursor: pointer; border: 1px solid var(--border); transition: transform 0.1s, border-color 0.2s; display: flex; flex-direction: column; gap: 12px; align-items: center; text-align: center; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
-.product-card:active { transform: scale(0.96); }
+.product-card { position: relative; z-index: 1; background: var(--panel-bg); border-radius: 16px; padding: 20px; cursor: pointer; border: 1px solid var(--border); transition: transform 0.1s, border-color 0.2s; display: flex; flex-direction: column; gap: 12px; align-items: center; text-align: center; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
+.product-card:active { transform: scale(0.96); z-index: 2; }
 .product-icon { width: 70px; height: 70px; background: #334155; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; color: var(--accent); }
 .product-name { font-weight: 700; font-size: 16px; line-height: 1.3; }
 .product-price { color: var(--success); font-weight: 800; font-size: 18px; }
