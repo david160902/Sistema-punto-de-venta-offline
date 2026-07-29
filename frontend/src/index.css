@@ -342,3 +342,40 @@ body { background-color: var(--bg-color); color: var(--text-main); overflow: hid
     padding-top: 0 !important;
   }
 }
+@media (max-width: 768px) {
+  .pos-container {
+    flex-direction: column;
+    height: 100dvh !important; /* Volvemos a fijar a la pantalla */
+    min-height: auto !important;
+    overflow: hidden;
+  }
+  .menu-section {
+    flex: 1 !important; /* Toma el espacio superior (aprox 55%) */
+    height: auto !important;
+    overflow-y: auto !important;
+    padding: 10px !important;
+  }
+  .cart-section {
+    width: 100% !important;
+    height: 45dvh !important; /* Toma el 45% inferior de la pantalla */
+    border-left: none !important;
+    border-top: 2px solid var(--border) !important;
+    display: flex !important;
+    flex-direction: column !important;
+  }
+  .cart-items {
+    flex: 1;
+    overflow-y: auto;
+    padding: 10px;
+  }
+  .cart-header, .cart-footer {
+    padding: 15px !important;
+  }
+  .total-row {
+    font-size: 20px !important;
+  }
+  .checkout-btn {
+    padding: 15px !important;
+    font-size: 18px !important;
+  }
+}
