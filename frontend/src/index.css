@@ -354,7 +354,6 @@ body { background-color: var(--bg-color); color: var(--text-main); overflow: hid
     flex: 1 !important; /* Toma el espacio superior (aprox 55%) */
     height: auto !important;
     overflow-y: auto !important;
-    padding: 10px !important;
   }
   .cart-section {
     width: 100% !important;

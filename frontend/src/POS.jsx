@@ -189,14 +189,14 @@ export default function POS() {
       {/* SECCIÓN IZQUIERDA: MENÚ Y PLATOS */}
       <div className="menu-section">
         <div className="sticky-header-container">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div className="pos-header-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div className="header-title">CHIFERÍA POS</div>
           
           {/* Indicador de Usuario y Botón de Salir */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(245, 158, 11, 0.1)', padding: '8px 15px', borderRadius: '20px', color: '#f59e0b', fontWeight: 'bold' }}>
               <UserCircle size={20} />
-              {loggedInUser.username}
+              <span className="user-badge-text">{loggedInUser.username}</span>
             </div>
             <button 
               onClick={() => setLoggedInUser(null)}
@@ -204,7 +204,7 @@ export default function POS() {
               onMouseOver={e => { e.currentTarget.style.background = '#ef4444'; e.currentTarget.style.color = 'white'; }}
               onMouseOut={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#ef4444'; }}
             >
-              <LogOut size={16} /> Bloquear
+              <LogOut size={16} /> <span className="logout-btn-text">Bloquear</span>
             </button>
           </div>
         </div>
@@ -222,7 +222,7 @@ export default function POS() {
           ))}
         </div>
 
-        {/* Cuadrícula de Platos */}
+        </div>        {/* Cuadrícula de Platos */}
         <div className="products-grid">
           {displayProducts.map(p => (
             <div key={p.id} className="product-card" onClick={() => handleProductClick(p)}>
