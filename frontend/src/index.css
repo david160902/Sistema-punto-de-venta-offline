@@ -432,3 +432,66 @@ body { background-color: var(--bg-color); color: var(--text-main); overflow: hid
     flex-direction: column !important;
   }
 }
+/* POS Horizontal en Celulares (Pantallas de poca altura) */
+@media (max-height: 550px) and (orientation: landscape) {
+  .pos-container {
+    flex-direction: row !important; /* Lado a lado */
+  }
+  .menu-section {
+    padding: 10px !important;
+    gap: 10px !important;
+  }
+  /* Categorías fijas en la parte superior para que no se pierdan al scrollear */
+  .categories-scroll {
+    position: sticky !important;
+    top: 0;
+    z-index: 10;
+    background: var(--bg-color);
+    padding: 5px 0 10px 0 !important;
+    margin: 0 !important;
+  }
+  .header-title {
+    display: none; /* Ocultar el título "Menú" para ahorrar espacio vital */
+  }
+  .cat-btn {
+    padding: 8px 16px !important;
+    font-size: 14px !important;
+  }
+  /* Productos más compactos */
+  .products-grid {
+    grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)) !important;
+    gap: 10px !important;
+  }
+  .product-card {
+    padding: 10px !important;
+    gap: 5px !important;
+  }
+  .product-icon {
+    width: 40px !important;
+    height: 40px !important;
+    font-size: 16px !important;
+  }
+  .product-name {
+    font-size: 12px !important;
+  }
+  .product-price {
+    font-size: 14px !important;
+  }
+  /* Carrito a la derecha, pero más delgado */
+  .cart-section {
+    width: 260px !important;
+  }
+  .cart-header, .cart-footer {
+    padding: 10px !important;
+  }
+  .cart-title {
+    font-size: 16px !important;
+  }
+  .checkout-btn {
+    padding: 10px !important;
+    font-size: 16px !important;
+  }
+  .total-row {
+    font-size: 18px !important;
+  }
+}
