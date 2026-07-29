@@ -36,24 +36,8 @@ export default function AdminLogin() {
   };
 
   return (
-    <div style={{
-      height: '100vh',
-      width: '100vw',
-      backgroundColor: '#0f172a',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      color: 'white'
-    }}>
-      <div style={{
-        background: '#1e293b',
-        padding: '50px',
-        borderRadius: '24px',
-        border: '1px solid #334155',
-        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
-        width: '400px',
-        textAlign: 'center'
-      }}>
+    <div className="admin-login-container">
+      <div className="admin-login-card">
         <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '20px', color: '#f59e0b' }}>
           <ShieldCheck size={64} />
         </div>

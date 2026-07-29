@@ -56,40 +56,19 @@ export default function LockScreen({ onLogin }) {
   };
 
   return (
-    <div style={{
-      height: '100vh',
-      width: '100%',
-      backgroundColor: '#020617', // Súper oscuro
-      display: 'flex',
-      flexDirection: 'row', // Lado a lado para tablets en horizontal
-      alignItems: 'center',
-      justifyContent: 'space-evenly',
-      color: 'white',
-      overflow: 'hidden'
-    }}>
+    <div className="lock-screen-container">
       {/* Reloj Grande (Izquierda) */}
-      <div style={{ textAlign: 'center', flex: 1 }}>
-        <h1 style={{ fontSize: '80px', fontWeight: '900', margin: '0', color: '#f8fafc', letterSpacing: '2px' }}>
+      <div className="lock-clock-container">
+        <h1 className="lock-clock-time">
           {time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
         </h1>
-        <p style={{ fontSize: '24px', color: '#94a3b8', margin: '10px 0 0 0', fontWeight: '500' }}>
+        <p className="lock-clock-date">
           {time.toLocaleDateString([], { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
         </p>
       </div>
 
       {/* Pantalla del PIN (Derecha) */}
-      <div style={{
-        background: '#0f172a',
-        padding: '35px',
-        borderRadius: '24px',
-        border: '1px solid #1e293b',
-        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
-        width: '380px',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        marginRight: '5%'
-      }}>
+      <div className="lock-pin-container">
         <h2 style={{ fontSize: '20px', color: '#cbd5e1', marginBottom: '25px', fontWeight: '600' }}>Ingresa tu PIN</h2>
         
         {/* Puntos (Dots) del PIN */}
