@@ -332,3 +332,13 @@ body { background-color: var(--bg-color); color: var(--text-main); overflow: hid
     margin-top: 5px;
   }
 }
+@media (max-width: 768px) {
+  .lock-clock-container {
+    flex: none;
+    margin-bottom: 20px;
+  }
+  .lock-screen-container {
+    justify-content: center !important;
+    padding-top: 0 !important;
+  }
+}
