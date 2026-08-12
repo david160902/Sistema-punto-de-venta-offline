@@ -10,7 +10,8 @@
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', system-ui, sans-serif; }
-body { background-color: var(--bg-color); color: var(--text-main); overflow: hidden; user-select: none; }
+body {
+  color-scheme: dark; background-color: var(--bg-color); color: var(--text-main); overflow: hidden; user-select: none; }
 
 .pos-container { display: flex; height: 100vh; height: 100dvh; width: 100%; overflow: hidden; }
 
@@ -502,4 +503,21 @@ body { background-color: var(--bg-color); color: var(--text-main); overflow: hid
   .cart-footer { padding: 15px !important; gap: 10px !important; }
   .cart-footer .total-row { font-size: 16px !important; }
   .checkout-btn { padding: 12px !important; font-size: 16px !important; }
+}
+
+/* Custom Scrollbar Premium */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg-color);
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb {
+  background: #475569;
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--accent);
 }

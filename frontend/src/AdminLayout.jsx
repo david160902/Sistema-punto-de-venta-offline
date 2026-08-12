@@ -1,6 +1,6 @@
 import React from 'react';
 import { Outlet, Link, useLocation, Navigate, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, ShoppingCart, Settings, Package, Users, LogOut } from 'lucide-react';
+import { LayoutDashboard, ShoppingCart, Settings, Package, Users, LogOut, Grid, CreditCard } from 'lucide-react';
 
 export default function AdminLayout() {
   const location = useLocation();
@@ -26,6 +26,12 @@ export default function AdminLayout() {
           </Link>
           <Link to="/productos" className={`nav-link ${location.pathname === '/productos' ? 'active' : ''}`}>
             <Package size={20}/> Productos
+          </Link>
+          <Link to="/mesas" className={`nav-link ${location.pathname === '/mesas' ? 'active' : ''}`}>
+            <Grid size={20}/> Mesas
+          </Link>
+          <Link to="/operaciones" className={`nav-link ${location.pathname === '/operaciones' ? 'active' : ''}`}>
+            <CreditCard size={20}/> Métodos de Pago
           </Link>
           <Link to="/personal" className={`nav-link ${location.pathname === '/personal' ? 'active' : ''}`}>
             <Users size={20}/> Personal

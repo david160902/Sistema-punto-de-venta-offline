@@ -60,17 +60,20 @@ CREATE TABLE IF NOT EXISTS customers (
 CREATE TABLE IF NOT EXISTS orders (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     ticket_number INTEGER NOT NULL, -- El correlativo: Ticket #005
-    order_type TEXT NOT NULL, -- 'LOCAL' o 'DELIVERY'
-    payment_method TEXT NOT NULL, -- 'EFECTIVO', 'YAPE', 'PLIN', 'TARJETA', 'MIXTO'
+    order_type TEXT NOT NULL, -- 'LOCAL' o 'DELIVERY' o 'PARA_LLEVAR'
+    payment_method TEXT, -- 'EFECTIVO', 'YAPE', etc. (Puede ser null si está ABIERTA)
+    status TEXT DEFAULT 'PAGADA', -- 'ABIERTA', 'PAGADA', 'ANULADA'
     total REAL NOT NULL,
     discount REAL DEFAULT 0.00,
     user_id INTEGER, -- Quién registró la orden
     driver_id INTEGER, -- Quién la está repartiendo
     customer_id INTEGER, -- Datos de quién lo recibe
+    table_id INTEGER, -- Mesa asociada al pedido (si es Salón)
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY(user_id) REFERENCES users(id),
     FOREIGN KEY(driver_id) REFERENCES drivers(id),
-    FOREIGN KEY(customer_id) REFERENCES customers(id)
+    FOREIGN KEY(customer_id) REFERENCES customers(id),
+    FOREIGN KEY(table_id) REFERENCES tables(id)
 );
 
 -- 9. Detalles del Ticket (Qué platos se pidieron en el Ticket #005)

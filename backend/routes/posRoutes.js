@@ -22,7 +22,11 @@ const storage = multer.diskStorage({
 const upload = multer({ storage: storage });
 
 const dbPath = path.resolve(__dirname, '../db/pos.db');
-const db = new sqlite3.Database(dbPath);
+const db = new sqlite3.Database(dbPath, (err) => {
+    if (!err) {
+        db.run('PRAGMA journal_mode = WAL;');
+    }
+});
 
 // ENDPOINT: Obtener Menú Completo
 router.get('/menu', (req, res) => {
@@ -41,63 +45,154 @@ router.get('/menu', (req, res) => {
     });
 });
 
-// ENDPOINT: Recibir una nueva orden (El botón "Enviar" de la tablet)
-router.post('/order', (req, res) => {
-    const { order_type, payment_method, total, items, driver_id, customer_name, customer_phone, user_id } = req.body;
-    
-    // 1. La PC es el embudo: Registra la orden y auto-genera el Ticket #
-    db.run(
-        `INSERT INTO orders (ticket_number, order_type, payment_method, total, driver_id, user_id, created_at) 
-         VALUES ((SELECT IFNULL(MAX(ticket_number), 0) + 1 FROM orders), ?, ?, ?, ?, ?, datetime('now', 'localtime'))`,
-        [order_type, payment_method, total, driver_id, user_id || null],
-        function(err) {
-            if (err) return res.status(500).json({ error: "Error al guardar orden: " + err.message });
-            
-            const newOrderId = this.lastID;
-            
-            // Insertar los productos de la orden en order_items
-            if (items && items.length > 0) {
-                const stmt = db.prepare(`INSERT INTO order_items (order_id, product_id, quantity, unit_price, subtotal, notes) VALUES (?, ?, ?, ?, ?, ?)`);
-                items.forEach(item => {
-                    stmt.run([newOrderId, item.id, item.qty, item.price, item.qty * item.price, item.notes || null]);
-                });
-                stmt.finalize();
-            }
-            
-            // 2. Extraemos el Número de Ticket que se acaba de crear (Ej. 001)
-            db.get("SELECT ticket_number FROM orders WHERE id = ?", [newOrderId], (err, row) => {
-                const ticketNumber = row.ticket_number;
-                
-                // 3. MANDAR A IMPRIMIR A LA LOPEN 🖨️
-                db.get("SELECT printer_type, printer_ip FROM settings WHERE id = 1", (err, settingsRow) => {
-                    printerService.printTicket(ticketNumber, req.body, settingsRow);
-                });
-                
-                // 4. Sincronización en Tiempo Real: Avisarle a todas las tablets que hubo una venta
-                req.io.emit('new_order', { ticketNumber, total });
+// ENDPOINT: Obtener orden por ID
+router.get('/order/:id', (req, res) => {
+    const orderId = req.params.id;
+    db.get("SELECT * FROM orders WHERE id = ?", [orderId], (err, order) => {
+        if (err || !order) return res.status(404).json({ error: "Orden no encontrada" });
+        db.all("SELECT oi.*, p.name FROM order_items oi JOIN products p ON oi.product_id = p.id WHERE oi.order_id = ?", [orderId], (err, items) => {
+            order.items = items || [];
+            res.json(order);
+        });
+    });
+});
 
-                // 5. Responderle a la Tablet que la misión fue un éxito
-                res.json({ 
-                    success: true, 
-                    ticket_number: ticketNumber, 
-                    message: 'Orden enviada a cocina e impresa exitosamente.' 
+// ENDPOINT: Obtener estado de las mesas (Salón)
+router.get('/active-tables', (req, res) => {
+    db.all("SELECT * FROM tables WHERE active = 1 ORDER BY id ASC", [], (err, tables) => {
+        if (err) return res.status(500).json({ error: err.message });
+        
+        // Buscar órdenes ABIERTAS asignadas a mesas
+        db.all("SELECT id, table_id, total, created_at FROM orders WHERE status = 'ABIERTA' AND table_id IS NOT NULL", [], (err, openOrders) => {
+            if (err) return res.status(500).json({ error: err.message });
+            
+            const ordersByTable = {};
+            openOrders.forEach(o => ordersByTable[o.table_id] = o);
+            
+            const tablesWithStatus = tables.map(t => ({
+                ...t,
+                current_order: ordersByTable[t.id] || null
+            }));
+            
+            res.json(tablesWithStatus);
+        });
+    });
+});
+
+// ENDPOINT: Recibir o actualizar una orden (Mandar a Cocina o Cobrar)
+router.post('/order', (req, res) => {
+    console.log("REQUEST BODY:", req.body);
+    const { order_id, order_type, payment_method, total, items, driver_id, customer_name, customer_phone, user_id, table_id, status } = req.body;
+    const currentStatus = status || 'PAGADA'; // Si no envían, por defecto se cobra.
+
+    if (order_id) {
+        // ACTUALIZAR ORDEN EXISTENTE
+        db.run(
+            `UPDATE orders SET order_type = ?, payment_method = ?, total = ?, driver_id = ?, user_id = ?, table_id = ?, status = ? WHERE id = ?`,
+            [order_type, payment_method || 'PENDIENTE', total, driver_id || null, user_id || null, table_id || null, currentStatus, order_id],
+            function(err) {
+                if (err) return res.status(500).json({ error: "Error al actualizar orden: " + err.message });
+                
+                // Borrar items viejos y meter nuevos
+                db.run(`DELETE FROM order_items WHERE order_id = ?`, [order_id], (err) => {
+                    if (items && items.length > 0) {
+                        const stmt = db.prepare(`INSERT INTO order_items (order_id, product_id, quantity, unit_price, subtotal, notes) VALUES (?, ?, ?, ?, ?, ?)`);
+                        items.forEach(item => {
+                            stmt.run([order_id, item.id, item.qty, item.price, item.qty * item.price, item.notes || null]);
+                        });
+                        stmt.finalize();
+                    }
+
+                    // Recuperar el número de ticket e imprimir
+                    db.get("SELECT ticket_number FROM orders WHERE id = ?", [order_id], (err, row) => {
+                        const ticketNumber = row.ticket_number;
+                        
+                        if (currentStatus === 'PAGADA') {
+                            db.get("SELECT * FROM settings WHERE id = 1", (err, settingsRow) => {
+                                printerService.printTicket(ticketNumber, req.body, settingsRow);
+                            });
+                        }
+                        
+                        req.io.emit('new_order', { ticketNumber, total, status: currentStatus, table_id });
+
+                        res.json({ 
+                            success: true, 
+                            ticket_number: ticketNumber,
+                            order_id: order_id,
+                            message: currentStatus === 'ABIERTA' ? 'Orden enviada a cocina.' : 'Orden cobrada exitosamente.'
+                        });
+                    });
                 });
-            });
-        }
-    );
+            }
+        );
+    } else {
+        // CREAR NUEVA ORDEN
+        db.run(
+            `INSERT INTO orders (ticket_number, order_type, payment_method, total, driver_id, user_id, table_id, status, created_at) 
+             VALUES ((SELECT IFNULL(MAX(ticket_number), 0) + 1 FROM orders), ?, ?, ?, ?, ?, ?, ?, datetime('now', 'localtime'))`,
+            [order_type, payment_method || 'PENDIENTE', total, driver_id || null, user_id || null, table_id || null, currentStatus],
+            function(err) {
+                if (err) return res.status(500).json({ error: "Error al guardar orden: " + err.message });
+                
+                const newOrderId = this.lastID;
+                
+                if (items && items.length > 0) {
+                    const stmt = db.prepare(`INSERT INTO order_items (order_id, product_id, quantity, unit_price, subtotal, notes) VALUES (?, ?, ?, ?, ?, ?)`);
+                    items.forEach(item => {
+                        stmt.run([newOrderId, item.id, item.qty, item.price, item.qty * item.price, item.notes || null]);
+                    });
+                    stmt.finalize();
+                }
+                
+                db.get("SELECT ticket_number FROM orders WHERE id = ?", [newOrderId], (err, row) => {
+                    const ticketNumber = row.ticket_number;
+                    
+                    if (currentStatus === 'PAGADA') {
+                        db.get("SELECT * FROM settings WHERE id = 1", (err, settingsRow) => {
+                            printerService.printTicket(ticketNumber, req.body, settingsRow);
+                        });
+                    }
+                    
+                    req.io.emit('new_order', { ticketNumber, total, status: currentStatus, table_id });
+
+                    res.json({ 
+                        success: true, 
+                        ticket_number: ticketNumber, 
+                        order_id: newOrderId,
+                        message: currentStatus === 'ABIERTA' ? 'Orden enviada a cocina.' : 'Orden cobrada exitosamente.'
+                    });
+                });
+            }
+        );
+    }
 });
 
 // ENDPOINT: Obtener historial y resumen estadístico completo (Dashboard)
 router.get('/orders', (req, res) => {
-    const period = req.query.period || 'day';
+    const period = req.query.period || 'month';
+    const specificDate = req.query.date; // e.g. "2026-08-11"
+    const specificMonth = req.query.month; // e.g. "2026-08"
+    const startDate = req.query.startDate; // e.g. "2026-08-01"
+    const endDate = req.query.endDate; // e.g. "2026-08-11"
     
     let dateCondition = "1=1";
     let chartGroup = "";
     let chartSelect = "";
     
-    // NOTA: created_at ya está guardado en localtime, por lo que NO se debe usar datetime(created_at, 'localtime')
-    // porque SQLite pensará que es UTC y le restará otras 5 horas (causando que se muestre como 12:00 en lugar de 17:00).
-    if (period === 'day') {
+    // NOTA: created_at ya está guardado en localtime
+    if (startDate && endDate) {
+        dateCondition = `date(created_at) BETWEEN '${startDate}' AND '${endDate}'`;
+        chartSelect = "date(created_at) as name";
+        chartGroup = "date(created_at)";
+    } else if (specificDate) {
+        dateCondition = `date(created_at) = '${specificDate}'`;
+        chartSelect = "strftime('%H:00', created_at) as name";
+        chartGroup = "strftime('%H', created_at)";
+    } else if (specificMonth) {
+        dateCondition = `strftime('%Y-%m', created_at) = '${specificMonth}'`;
+        chartSelect = "date(created_at) as name";
+        chartGroup = "date(created_at)";
+    } else if (period === 'day') {
         dateCondition = "date(created_at) = date('now', 'localtime')";
         chartSelect = "strftime('%H:00', created_at) as name";
         chartGroup = "strftime('%H', created_at)";
@@ -115,23 +210,22 @@ router.get('/orders', (req, res) => {
         chartGroup = "strftime('%Y-%m', created_at)";
     }
 
-    // 1. Resumen de KPIs
     const kpiQuery = `
         SELECT 
-            IFNULL(SUM(total), 0) as total_sales, 
-            COUNT(*) as total_tickets,
-            IFNULL(AVG(total), 0) as avg_ticket
+            IFNULL(SUM(CASE WHEN status = 'PAGADA' THEN total ELSE 0 END), 0) as total_sales, 
+            IFNULL(SUM(CASE WHEN status = 'PAGADA' THEN 1 ELSE 0 END), 0) as total_tickets,
+            IFNULL(AVG(CASE WHEN status = 'PAGADA' THEN total ELSE NULL END), 0) as avg_ticket,
+            IFNULL(SUM(CASE WHEN status = 'ABIERTA' THEN total ELSE 0 END), 0) as total_pending
         FROM orders 
         WHERE ${dateCondition}
     `;
 
-    // 2. Datos para la Gráfica
     const chartQuery = `
         SELECT 
             ${chartSelect}, 
             SUM(total) as sales 
         FROM orders 
-        WHERE ${dateCondition}
+        WHERE ${dateCondition} AND status = 'PAGADA'
         GROUP BY ${chartGroup}
         ORDER BY name ASC
     `;
@@ -144,8 +238,20 @@ router.get('/orders', (req, res) => {
         ORDER BY o.created_at DESC
     `;
 
-    // 4. Lista de trabajadores activos (para filtros)
-    const workersQuery = "SELECT id, username as name FROM users WHERE active = 1";
+    // 4. Lista de trabajadores activos (sin administradores, para filtros)
+    const workersQuery = "SELECT id, username as name FROM users WHERE active = 1 AND role != 'ADMIN'";
+
+    // 5. Lista de platos más vendidos (Top 5)
+    const topProductsQuery = `
+        SELECT p.name as product_name, SUM(oi.quantity) as total_sold
+        FROM order_items oi
+        JOIN orders o ON oi.order_id = o.id
+        JOIN products p ON oi.product_id = p.id
+        WHERE ${dateCondition.replace(/created_at/g, 'o.created_at')} AND o.status = 'PAGADA'
+        GROUP BY p.id
+        ORDER BY total_sold DESC
+        LIMIT 5
+    `;
 
     db.get(kpiQuery, [], (err, summary) => {
         if (err) return res.status(500).json({ error: err.message });
@@ -157,11 +263,16 @@ router.get('/orders', (req, res) => {
                 if (err) return res.status(500).json({ error: err.message });
                 
                 db.all(workersQuery, [], (err, workers) => {
-                    res.json({ 
-                        summary: summary || { total_sales: 0, total_tickets: 0, avg_ticket: 0 }, 
-                        chartData: chartData || [],
-                        orders: orders || [],
-                        workers: workers || []
+                    if (err) return res.status(500).json({ error: err.message });
+                    
+                    db.all(topProductsQuery, [], (err, topProducts) => {
+                        res.json({ 
+                            summary: summary || { total_sales: 0, total_tickets: 0, avg_ticket: 0, total_pending: 0 }, 
+                            chartData: chartData || [],
+                            orders: orders || [],
+                            workers: workers || [],
+                            topProducts: topProducts || []
+                        });
                     });
                 });
             });
@@ -350,16 +461,26 @@ router.get('/settings', (req, res) => {
 });
 
 // ENDPOINT: Guardar Configuraciones
-router.put('/settings', (req, res) => {
-    const { business_name, address, phone, ticket_message, printer_type, printer_ip } = req.body;
-    db.run(
-        `UPDATE settings SET business_name=?, address=?, phone=?, ticket_message=?, printer_type=?, printer_ip=? WHERE id=1`,
-        [business_name, address, phone, ticket_message, printer_type, printer_ip],
-        function(err) {
-            if (err) return res.status(500).json({ error: err.message });
-            res.json({ success: true });
-        }
-    );
+router.put('/settings', upload.single('logo'), (req, res) => {
+    const { business_name, address, phone, ticket_message, printer_type, printer_ip, remove_logo } = req.body;
+    
+    // Si hay un archivo subido, usamos su nombre, si remove_logo es true, lo borramos (null)
+    const logoFile = req.file ? req.file.filename : (remove_logo === 'true' ? null : undefined);
+
+    let query = `UPDATE settings SET business_name=?, address=?, phone=?, ticket_message=?, printer_type=?, printer_ip=?`;
+    let params = [business_name, address, phone, ticket_message, printer_type, printer_ip];
+
+    if (logoFile !== undefined) {
+        query += `, logo=?`;
+        params.push(logoFile);
+    }
+    
+    query += ` WHERE id=1`;
+
+    db.run(query, params, function(err) {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json({ success: true, logo: logoFile });
+    });
 });
 
 // ENDPOINT: Cambiar PIN del Administrador Maestro
@@ -440,6 +561,104 @@ router.post('/auth', (req, res) => {
         if (!row) return res.status(401).json({ error: "PIN incorrecto" });
         
         res.json({ success: true, user: row });
+    });
+});
+
+// ENDPOINT: Obtener Métodos de Pago
+router.get('/payment-methods', (req, res) => {
+    db.all("SELECT * FROM payment_methods WHERE active = 1", [], (err, rows) => {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json(rows);
+    });
+});
+
+// ENDPOINT: Agregar Método de Pago
+router.post('/payment-methods', (req, res) => {
+    const { name } = req.body;
+    if (!name) return res.status(400).json({ error: "Nombre requerido" });
+    db.run("INSERT INTO payment_methods (name) VALUES (?)", [name], function(err) {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json({ id: this.lastID, name, active: 1 });
+    });
+});
+
+// ENDPOINT: Desactivar Método de Pago
+router.delete('/payment-methods/:id', (req, res) => {
+    db.run("UPDATE payment_methods SET active = 0 WHERE id = ?", [req.params.id], function(err) {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json({ success: true });
+    });
+});
+
+// ENDPOINT: Obtener Motorizados
+router.get('/drivers', (req, res) => {
+    db.all("SELECT * FROM drivers WHERE is_active = 1", [], (err, drivers) => {
+        if (err) return res.status(500).json({ error: err.message });
+        
+        db.all("SELECT * FROM orders WHERE status = 'ABIERTA' AND driver_id IS NOT NULL", [], (err, openOrders) => {
+            if (err) return res.status(500).json({ error: err.message });
+            
+            const driversWithStatus = drivers.map(d => ({
+                ...d,
+                current_orders: openOrders.filter(o => o.driver_id === d.id)
+            }));
+            
+            res.json(driversWithStatus);
+        });
+    });
+});
+
+// ENDPOINT: Agregar Motorizado
+router.post('/drivers', (req, res) => {
+    const { name } = req.body;
+    if (!name) return res.status(400).json({ error: "Nombre requerido" });
+    db.run("INSERT INTO drivers (name) VALUES (?)", [name], function(err) {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json({ id: this.lastID, name, is_active: 1 });
+    });
+});
+
+// ENDPOINT: Desactivar Motorizado
+router.delete('/drivers/:id', (req, res) => {
+    db.run("UPDATE drivers SET is_active = 0 WHERE id = ?", [req.params.id], function(err) {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json({ success: true });
+    });
+});
+
+// ENDPOINT: Obtener Mesas
+router.get('/tables', (req, res) => {
+    db.all("SELECT * FROM tables WHERE active = 1", [], (err, rows) => {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json(rows);
+    });
+});
+
+// ENDPOINT: Agregar Mesa
+router.post('/tables', (req, res) => {
+    const { name } = req.body;
+    if (!name) return res.status(400).json({ error: "Nombre de mesa requerido" });
+    db.run("INSERT INTO tables (name) VALUES (?)", [name], function(err) {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json({ id: this.lastID, name, active: 1 });
+    });
+});
+
+// ENDPOINT: Editar Mesa
+router.put('/tables/:id', (req, res) => {
+    const { name } = req.body;
+    if (!name) return res.status(400).json({ error: "Nombre de mesa requerido" });
+    db.run("UPDATE tables SET name = ? WHERE id = ?", [name, req.params.id], function(err) {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json({ success: true });
+    });
+});
+
+// ENDPOINT: Eliminar/Desactivar Mesa
+router.delete('/tables/:id', (req, res) => {
+    db.run("UPDATE tables SET active = 0 WHERE id = ?", [req.params.id], function(err) {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json({ success: true });
     });
 });
 

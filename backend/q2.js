@@ -1,0 +1,3 @@
+const sqlite3 = require('sqlite3');
+const db = new sqlite3.Database('./db/pos.db');
+db.get("SELECT IFNULL(SUM(CASE WHEN status = 'ABIERTA' THEN total ELSE 0 END), 0) as total_pending FROM orders WHERE date(created_at) = date('now', 'localtime')", (err, row) => console.log(err||row));

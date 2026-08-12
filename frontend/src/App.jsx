@@ -3,6 +3,8 @@ import POS from './POS';
 import AdminLayout from './AdminLayout';
 import Dashboard from './Dashboard';
 import ProductsAdmin from './ProductsAdmin';
+import TablesAdmin from './TablesAdmin';
+import OperationsAdmin from './OperationsAdmin';
 import StaffAdmin from './StaffAdmin';
 import SettingsAdmin from './SettingsAdmin';
 import AdminLogin from './AdminLogin';
@@ -23,6 +25,8 @@ function App() {
           <Route index element={<Navigate to="/dashboard" replace />} />
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="productos" element={<ProductsAdmin />} />
+          <Route path="mesas" element={<TablesAdmin />} />
+          <Route path="operaciones" element={<OperationsAdmin />} />
           <Route path="personal" element={<StaffAdmin />} />
           <Route path="configuracion" element={<SettingsAdmin />} />
         </Route>
