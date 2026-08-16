@@ -1,0 +1,1 @@
+const fs = require('fs'); let css = fs.readFileSync('../frontend/src/index.css', 'utf8'); fs.writeFileSync('../frontend/src/index.css', css + '\n\n.pos-container-home { flex-direction: column !important; }\n');

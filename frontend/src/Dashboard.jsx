@@ -78,8 +78,8 @@ export default function Dashboard() {
   });
 
   return (
-    <div style={{ padding: '40px', color: '#f8fafc', height: '100%', overflowY: 'auto' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
+    <div style={{ padding: '20px', color: '#f8fafc', height: '100%', overflowY: 'auto' }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px', gap: '15px' }}>
         <h1 style={{ margin: 0 }}>Análisis y Reportes</h1>
         
         {/* Navegación de Pestañas */}
@@ -111,11 +111,11 @@ export default function Dashboard() {
         <>
           <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '20px' }}>
             {/* Filtros Avanzados (Rango / Mes / Día) */}
-            <div style={{ display: 'flex', gap: '15px', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'nowrap', width: '100%', justifyContent: 'flex-start', overflow: 'hidden' }}>
               
               {/* Rango de Fechas */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', background: '#1e293b', padding: '5px 15px', borderRadius: '12px', border: '1px solid #334155' }}>
-                <span style={{ color: '#94a3b8', fontWeight: 'bold' }}>Desde:</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '5px', background: (startDate || endDate) ? 'rgba(59, 130, 246, 0.15)' : '#1e293b', padding: '4px 8px', borderRadius: '8px', border: `1px solid ${(startDate || endDate) ? '#3b82f6' : '#334155'}`, flexShrink: 1, transition: '0.3s' }}>
+                <span style={{ color: (startDate || endDate) ? '#60a5fa' : '#94a3b8', fontWeight: 'bold', fontSize: '13px' }}>Desde:</span>
                 <input 
                   type="date" 
                   value={startDate}
@@ -125,9 +125,9 @@ export default function Dashboard() {
                     setSpecificDate('');
                     setPeriod('');
                   }}
-                  style={{ background: 'transparent', border: 'none', color: '#fff', outline: 'none', fontWeight: 'bold' }}
+                  style={{ background: 'transparent', border: 'none', color: '#fff', outline: 'none', fontWeight: 'bold', fontSize: '13px', width: '105px' }}
                 />
-                <span style={{ color: '#94a3b8', fontWeight: 'bold' }}>Hasta:</span>
+                <span style={{ color: (startDate || endDate) ? '#60a5fa' : '#94a3b8', fontWeight: 'bold', fontSize: '13px' }}>Hasta:</span>
                 <input 
                   type="date" 
                   value={endDate}
@@ -137,13 +137,13 @@ export default function Dashboard() {
                     setSpecificDate('');
                     setPeriod('');
                   }}
-                  style={{ background: 'transparent', border: 'none', color: '#fff', outline: 'none', fontWeight: 'bold' }}
+                  style={{ background: 'transparent', border: 'none', color: '#fff', outline: 'none', fontWeight: 'bold', fontSize: '13px', width: '105px' }}
                 />
               </div>
 
               {/* Mes */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', background: '#1e293b', padding: '5px 15px', borderRadius: '12px', border: '1px solid #334155' }}>
-                <span style={{ color: '#94a3b8', fontWeight: 'bold' }}>Mes:</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '5px', background: specificMonth ? 'rgba(59, 130, 246, 0.15)' : '#1e293b', padding: '4px 8px', borderRadius: '8px', border: `1px solid ${specificMonth ? '#3b82f6' : '#334155'}`, flexShrink: 1, transition: '0.3s' }}>
+                <span style={{ color: specificMonth ? '#60a5fa' : '#94a3b8', fontWeight: 'bold', fontSize: '13px' }}>Mes:</span>
                 <input 
                   type="month" 
                   value={specificMonth}
@@ -154,13 +154,13 @@ export default function Dashboard() {
                     setEndDate('');
                     setPeriod('');
                   }}
-                  style={{ background: 'transparent', border: 'none', color: '#fff', outline: 'none', fontWeight: 'bold' }}
+                  style={{ background: 'transparent', border: 'none', color: '#fff', outline: 'none', fontWeight: 'bold', fontSize: '13px', width: '115px' }}
                 />
               </div>
 
               {/* Día */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', background: '#1e293b', padding: '5px 15px', borderRadius: '12px', border: '1px solid #334155' }}>
-                <span style={{ color: '#94a3b8', fontWeight: 'bold' }}>Día exacto:</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '5px', background: specificDate ? 'rgba(59, 130, 246, 0.15)' : '#1e293b', padding: '4px 8px', borderRadius: '8px', border: `1px solid ${specificDate ? '#3b82f6' : '#334155'}`, flexShrink: 1, transition: '0.3s' }}>
+                <span style={{ color: specificDate ? '#60a5fa' : '#94a3b8', fontWeight: 'bold', fontSize: '13px' }}>Día exacto:</span>
                 <input 
                   type="date" 
                   value={specificDate}
@@ -171,14 +171,14 @@ export default function Dashboard() {
                     setEndDate('');
                     setPeriod('');
                   }}
-                  style={{ background: 'transparent', border: 'none', color: '#fff', outline: 'none', fontWeight: 'bold' }}
+                  style={{ background: 'transparent', border: 'none', color: '#fff', outline: 'none', fontWeight: 'bold', fontSize: '13px', width: '105px' }}
                 />
               </div>
               
-              <div style={{ display: 'flex', background: '#1e293b', padding: '5px', borderRadius: '12px', border: '1px solid #334155' }}>
+              <div style={{ display: 'flex', background: period === 'all' ? 'rgba(59, 130, 246, 0.15)' : '#1e293b', padding: '2px', borderRadius: '8px', border: `1px solid ${period === 'all' ? '#3b82f6' : '#334155'}`, flexShrink: 1, transition: '0.3s' }}>
                 <button 
                   onClick={() => { setPeriod('all'); setSpecificDate(''); setSpecificMonth(''); setStartDate(''); setEndDate(''); }}
-                  style={{ padding: '10px 20px', borderRadius: '8px', border: 'none', background: period === 'all' ? '#3b82f6' : 'transparent', color: period === 'all' ? '#fff' : '#94a3b8', cursor: 'pointer', fontWeight: 'bold' }}>
+                  style={{ padding: '6px 12px', borderRadius: '6px', border: 'none', background: period === 'all' ? '#3b82f6' : 'transparent', color: period === 'all' ? '#fff' : '#94a3b8', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px', whiteSpace: 'nowrap' }}>
                   Histórico Global
                 </button>
               </div>
@@ -211,9 +211,9 @@ export default function Dashboard() {
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '20px', marginBottom: '40px' }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '20px', marginBottom: '40px' }}>
         {/* Gráfico de Ventas */}
-        <div style={{ background: '#1e293b', padding: '30px', borderRadius: '16px', border: '1px solid #334155' }}>
+        <div style={{ flex: '1 1 500px', background: '#1e293b', padding: '30px', borderRadius: '16px', border: '1px solid #334155' }}>
           <h3 style={{ color: '#94a3b8', marginBottom: '20px', fontWeight: '600' }}>Flujo de Ingresos (PAGADOS)</h3>
           <div style={{ width: '100%', height: 350 }}>
             <ResponsiveContainer>
@@ -239,7 +239,7 @@ export default function Dashboard() {
         </div>
 
         {/* Top 5 Platos Más Vendidos */}
-        <div style={{ background: '#1e293b', padding: '30px', borderRadius: '16px', border: '1px solid #334155', display: 'flex', flexDirection: 'column' }}>
+        <div style={{ flex: '1 1 300px', background: '#1e293b', padding: '30px', borderRadius: '16px', border: '1px solid #334155', display: 'flex', flexDirection: 'column' }}>
           <h3 style={{ color: '#94a3b8', marginBottom: '20px', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '10px' }}>
             <Star size={20} color="#eab308" /> Top 5 Productos
           </h3>
@@ -271,7 +271,7 @@ export default function Dashboard() {
           <h3 style={{ color: '#94a3b8', fontWeight: '600', marginBottom: '20px' }}>Buscador Avanzado de Recibos</h3>
           
           {/* Filtros */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '15px', marginBottom: '30px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '15px', marginBottom: '30px' }}>
             <input 
               type="text" 
               className="form-input"

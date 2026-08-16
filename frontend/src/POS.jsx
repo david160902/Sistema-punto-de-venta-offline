@@ -59,9 +59,14 @@ export default function POS() {
 
   // Cargar mesas y motorizados cada vez que volvemos al Home
   useEffect(() => {
+    let interval;
     if (!activeTarget) {
       loadHomeData();
+      interval = setInterval(loadHomeData, 5000); // Actualización en tiempo real (cada 5s)
     }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
   }, [activeTarget]);
 
   const loadHomeData = () => {
@@ -241,8 +246,24 @@ export default function POS() {
   // ===== VISTA 1: SALÓN Y MOTORIZADOS (HOME) =====
   if (!activeTarget) {
     return (
-      <div className="pos-container" style={{ flexDirection: 'column' }}>
-        <div className="sticky-header-container" style={{ position: 'static' }}>
+      <div className="pos-container pos-container-home">
+        <style>{`
+          @media (max-width: 768px) {
+            .mesas-grid { grid-template-columns: repeat(3, 1fr) !important; gap: 8px !important; }
+            .mesa-btn-container { padding: 10px 4px !important; }
+            .mesa-btn-title { font-size: 13px !important; }
+            .motorizados-panel { min-width: 100px !important; padding: 10px !important; }
+            .mesas-panel { padding: 10px !important; }
+          }
+          @media (max-width: 1024px) and (orientation: landscape) {
+            .mesas-grid { grid-template-columns: repeat(4, 1fr) !important; gap: 10px !important; }
+            .mesa-btn-title { font-size: 15px !important; }
+            .motorizados-panel { min-width: 150px !important; flex: 1 !important; width: auto !important; }
+            .mesas-panel { flex: 3 !important; width: auto !important; }
+            .salon-container { flex-direction: row !important; }
+          }
+        `}</style>
+        <div className="sticky-header-container" style={{ position: 'static', paddingBottom: '0px' }}>
           <div className="pos-header-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div className="header-title">SALÓN Y PEDIDOS</div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
@@ -256,25 +277,26 @@ export default function POS() {
           </div>
         </div>
 
-        <div style={{ display: 'flex', flex: 1, padding: '20px', gap: '20px', background: '#0f172a', overflowY: 'auto' }}>
+        <div className="salon-container" style={{ paddingTop: '10px', marginTop: '0px' }}>
           {/* Lado Izquierdo: Mesas (LOCAL) */}
-          <div style={{ flex: 3, background: '#1e293b', borderRadius: '16px', padding: '20px', border: '1px solid #334155' }}>
-            <h2 style={{ margin: '0 0 20px 0', color: '#fff', display: 'flex', alignItems: 'center', gap: '10px' }}><Grid size={24} color="#3b82f6"/> Mesas (Salón)</h2>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: '15px' }}>
+          <div className="mesas-panel">
+            <h2 style={{ margin: '0 0 10px 0', color: '#fff', display: 'flex', alignItems: 'center', gap: '10px' }}><Grid size={24} color="#3b82f6"/> Mesas (Salón)</h2>
+            <div className="mesas-grid">
               {tables.map(t => {
                 const isOccupied = !!t.current_order;
                 return (
                   <button 
                     key={t.id} 
+                    className="mesa-btn-container"
                     onClick={() => handleTargetSelect({ type: 'LOCAL', id: t.id, name: t.name, current_order: t.current_order })}
                     style={{ 
                       background: isOccupied ? 'rgba(239, 68, 68, 0.1)' : 'rgba(16, 185, 129, 0.1)',
                       border: `2px solid ${isOccupied ? '#ef4444' : '#10b981'}`,
-                      borderRadius: '12px', padding: '20px 10px', color: 'white', cursor: 'pointer',
-                      display: 'flex', flexDirection: 'column', alignItems: 'center', transition: '0.2s'
+                      borderRadius: '12px',  color: 'white', cursor: 'pointer',
+                      
                     }}>
-                    <div style={{ fontSize: '20px', fontWeight: 'bold' }}>{t.name}</div>
-                    <div style={{ fontSize: '12px', marginTop: '5px', color: isOccupied ? '#fca5a5' : '#6ee7b7' }}>
+                    <div className="mesa-btn-title" style={{ fontSize: '20px', fontWeight: 'bold' }}>{t.name}</div>
+                    <div className="mesa-btn-subtitle" style={{ fontSize: '12px', marginTop: '5px', color: isOccupied ? '#fca5a5' : '#6ee7b7' }}>
                       {isOccupied ? `S/ ${t.current_order.total.toFixed(2)}` : 'Disponible'}
                     </div>
                   </button>
@@ -284,37 +306,35 @@ export default function POS() {
           </div>
 
           {/* Lado Derecho: Motorizados */}
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '20px' }}>
-            <div style={{ background: '#1e293b', borderRadius: '16px', padding: '20px', border: '1px solid #334155', flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
-              <h3 style={{ margin: '0 0 15px 0', color: '#fff', display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}><Bike size={20} color="#f59e0b"/> Motorizados</h3>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', flex: 1, overflowY: 'auto', paddingRight: '5px' }}>
-                {drivers.map(d => {
-                  const hasOrders = d.current_orders && d.current_orders.length > 0;
-                  return (
-                    <button 
-                      key={d.id}
-                      onClick={() => {
-                        if (hasOrders) {
-                          setSelectingDriver(d);
-                        } else {
-                          handleTargetSelect({ type: 'DELIVERY', id: d.id, name: d.name, current_order: null });
-                        }
-                      }}
-                      style={{ 
-                        background: hasOrders ? 'rgba(239, 68, 68, 0.1)' : '#0f172a', 
-                        border: `1px solid ${hasOrders ? '#ef4444' : '#334155'}`, 
-                        padding: '15px', borderRadius: '10px', color: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px', fontWeight: 'bold' 
-                      }}>
-                      <div style={{display: 'flex', alignItems: 'center', gap: '10px'}}>
-                        <Bike size={18} color={hasOrders ? "#fca5a5" : "#94a3b8"}/> 
-                        {d.name}
-                      </div>
-                      {hasOrders && <span style={{color: '#fca5a5', fontSize: '12px'}}>{d.current_orders.length} pedido(s)</span>}
-                    </button>
-                  )
-                })}
-                {drivers.length === 0 && <div style={{color:'#64748b', fontSize:'14px', textAlign:'center'}}>No hay motorizados activos</div>}
-              </div>
+          <div className="motorizados-panel" style={{ background: '#1e293b', borderRadius: '16px', padding: '15px', border: '1px solid #334155' }}>
+            <h3 style={{ margin: '0 0 10px 0', color: '#fff', display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}><Bike size={20} color="#f59e0b"/> Motorizados</h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', flex: 1, overflowY: 'auto', paddingRight: '5px' }}>
+              {drivers.map(d => {
+                const hasOrders = d.current_orders && d.current_orders.length > 0;
+                return (
+                  <button 
+                    key={d.id}
+                    onClick={() => {
+                      if (hasOrders) {
+                        setSelectingDriver(d);
+                      } else {
+                        handleTargetSelect({ type: 'DELIVERY', id: d.id, name: d.name, current_order: null });
+                      }
+                    }}
+                    style={{ 
+                      background: hasOrders ? 'rgba(239, 68, 68, 0.1)' : '#0f172a', 
+                      border: `1px solid ${hasOrders ? '#ef4444' : '#334155'}`, 
+                      padding: '12px 10px', borderRadius: '10px', color: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '5px', fontWeight: 'bold', width: '100%' 
+                    }}>
+                    <div style={{display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0, flex: 1}}>
+                      <Bike size={18} color={hasOrders ? "#fca5a5" : "#94a3b8"} style={{flexShrink: 0}}/> 
+                      <span style={{whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'}}>{d.name}</span>
+                    </div>
+                    {hasOrders && <span style={{background: '#ef4444', color: 'white', padding: '2px 8px', borderRadius: '12px', fontSize: '11px', flexShrink: 0}}>{d.current_orders.length}</span>}
+                  </button>
+                )
+              })}
+              {drivers.length === 0 && <div style={{color:'#64748b', fontSize:'14px', textAlign:'center'}}>No hay motorizados activos</div>}
             </div>
           </div>
         </div>

@@ -1,0 +1,1 @@
+const fs = require('fs'); let css = fs.readFileSync('../frontend/src/index.css', 'utf8'); css += '\n@media (max-width: 650px) {\n  .sticky-header-container { padding-bottom: 5px !important; }\n  .salon-container { padding-top: 5px !important; }\n}'; fs.writeFileSync('../frontend/src/index.css', css);
