@@ -83,28 +83,67 @@ router.get('/active-tables', (req, res) => {
 router.post('/order', (req, res) => {
     console.log("REQUEST BODY:", req.body);
     const { order_id, order_type, payment_method, total, items, driver_id, customer_name, customer_phone, user_id, table_id, status } = req.body;
-    const currentStatus = status || 'PAGADA'; // Si no envían, por defecto se cobra.
+    const currentStatus = status || 'PAGADA'; 
 
-    if (order_id) {
-        // ACTUALIZAR ORDEN EXISTENTE
-        db.run(
-            `UPDATE orders SET order_type = ?, payment_method = ?, total = ?, driver_id = ?, user_id = ?, table_id = ?, status = ? WHERE id = ?`,
-            [order_type, payment_method || 'PENDIENTE', total, driver_id || null, user_id || null, table_id || null, currentStatus, order_id],
-            function(err) {
-                if (err) return res.status(500).json({ error: "Error al actualizar orden: " + err.message });
-                
-                // Borrar items viejos y meter nuevos
-                db.run(`DELETE FROM order_items WHERE order_id = ?`, [order_id], (err) => {
+    db.get("SELECT id FROM cash_shifts WHERE status = 'OPEN' ORDER BY id DESC LIMIT 1", (err, shiftRow) => {
+        const currentShiftId = shiftRow ? shiftRow.id : null;
+
+        if (order_id) {
+            db.run(
+                `UPDATE orders SET order_type = ?, payment_method = ?, total = ?, driver_id = ?, user_id = ?, table_id = ?, status = ?, shift_id = COALESCE(shift_id, ?) WHERE id = ?`,
+                [order_type, payment_method || 'PENDIENTE', total, driver_id || null, user_id || null, table_id || null, currentStatus, currentShiftId, order_id],
+                function(err) {
+                    if (err) return res.status(500).json({ error: "Error al actualizar orden: " + err.message });
+                    
+                    db.run(`DELETE FROM order_items WHERE order_id = ?`, [order_id], (err) => {
+                        if (items && items.length > 0) {
+                            const stmt = db.prepare(`INSERT INTO order_items (order_id, product_id, quantity, unit_price, subtotal, notes) VALUES (?, ?, ?, ?, ?, ?)`);
+                            items.forEach(item => {
+                                stmt.run([order_id, item.id, item.qty, item.price, item.qty * item.price, item.notes || null]);
+                            });
+                            stmt.finalize();
+                        }
+
+                        db.get("SELECT ticket_number FROM orders WHERE id = ?", [order_id], (err, row) => {
+                            const ticketNumber = row.ticket_number;
+                            
+                            if (currentStatus === 'PAGADA') {
+                                db.get("SELECT * FROM settings WHERE id = 1", (err, settingsRow) => {
+                                    printerService.printTicket(ticketNumber, req.body, settingsRow);
+                                });
+                            }
+                            
+                            req.io.emit('new_order', { ticketNumber, total, status: currentStatus, table_id });
+
+                            res.json({ 
+                                success: true, 
+                                ticket_number: ticketNumber,
+                                order_id: order_id,
+                                message: currentStatus === 'ABIERTA' ? 'Orden enviada a cocina.' : 'Orden cobrada exitosamente.'
+                            });
+                        });
+                    });
+                }
+            );
+        } else {
+            db.run(
+                `INSERT INTO orders (ticket_number, order_type, payment_method, total, driver_id, user_id, table_id, status, shift_id, created_at) 
+                 VALUES ((SELECT IFNULL(MAX(ticket_number), 0) + 1 FROM orders), ?, ?, ?, ?, ?, ?, ?, ?, datetime('now', 'localtime'))`,
+                [order_type, payment_method || 'PENDIENTE', total, driver_id || null, user_id || null, table_id || null, currentStatus, currentShiftId],
+                function(err) {
+                    if (err) return res.status(500).json({ error: "Error al guardar orden: " + err.message });
+                    
+                    const newOrderId = this.lastID;
+                    
                     if (items && items.length > 0) {
                         const stmt = db.prepare(`INSERT INTO order_items (order_id, product_id, quantity, unit_price, subtotal, notes) VALUES (?, ?, ?, ?, ?, ?)`);
                         items.forEach(item => {
-                            stmt.run([order_id, item.id, item.qty, item.price, item.qty * item.price, item.notes || null]);
+                            stmt.run([newOrderId, item.id, item.qty, item.price, item.qty * item.price, item.notes || null]);
                         });
                         stmt.finalize();
                     }
-
-                    // Recuperar el número de ticket e imprimir
-                    db.get("SELECT ticket_number FROM orders WHERE id = ?", [order_id], (err, row) => {
+                    
+                    db.get("SELECT ticket_number FROM orders WHERE id = ?", [newOrderId], (err, row) => {
                         const ticketNumber = row.ticket_number;
                         
                         if (currentStatus === 'PAGADA') {
@@ -118,53 +157,14 @@ router.post('/order', (req, res) => {
                         res.json({ 
                             success: true, 
                             ticket_number: ticketNumber,
-                            order_id: order_id,
+                            order_id: newOrderId,
                             message: currentStatus === 'ABIERTA' ? 'Orden enviada a cocina.' : 'Orden cobrada exitosamente.'
                         });
                     });
-                });
-            }
-        );
-    } else {
-        // CREAR NUEVA ORDEN
-        db.run(
-            `INSERT INTO orders (ticket_number, order_type, payment_method, total, driver_id, user_id, table_id, status, created_at) 
-             VALUES ((SELECT IFNULL(MAX(ticket_number), 0) + 1 FROM orders), ?, ?, ?, ?, ?, ?, ?, datetime('now', 'localtime'))`,
-            [order_type, payment_method || 'PENDIENTE', total, driver_id || null, user_id || null, table_id || null, currentStatus],
-            function(err) {
-                if (err) return res.status(500).json({ error: "Error al guardar orden: " + err.message });
-                
-                const newOrderId = this.lastID;
-                
-                if (items && items.length > 0) {
-                    const stmt = db.prepare(`INSERT INTO order_items (order_id, product_id, quantity, unit_price, subtotal, notes) VALUES (?, ?, ?, ?, ?, ?)`);
-                    items.forEach(item => {
-                        stmt.run([newOrderId, item.id, item.qty, item.price, item.qty * item.price, item.notes || null]);
-                    });
-                    stmt.finalize();
                 }
-                
-                db.get("SELECT ticket_number FROM orders WHERE id = ?", [newOrderId], (err, row) => {
-                    const ticketNumber = row.ticket_number;
-                    
-                    if (currentStatus === 'PAGADA') {
-                        db.get("SELECT * FROM settings WHERE id = 1", (err, settingsRow) => {
-                            printerService.printTicket(ticketNumber, req.body, settingsRow);
-                        });
-                    }
-                    
-                    req.io.emit('new_order', { ticketNumber, total, status: currentStatus, table_id });
-
-                    res.json({ 
-                        success: true, 
-                        ticket_number: ticketNumber, 
-                        order_id: newOrderId,
-                        message: currentStatus === 'ABIERTA' ? 'Orden enviada a cocina.' : 'Orden cobrada exitosamente.'
-                    });
-                });
-            }
-        );
-    }
+            );
+        }
+    });
 });
 
 // ENDPOINT: Obtener historial y resumen estadístico completo (Dashboard)
@@ -286,9 +286,10 @@ router.get('/orders/:id', (req, res) => {
     
     // Obtener la cabecera de la orden
     db.get(`
-        SELECT o.*, u.username as worker_name 
+        SELECT o.*, u.username as worker_name, t.name as table_name
         FROM orders o 
         LEFT JOIN users u ON o.user_id = u.id 
+        LEFT JOIN tables t ON o.table_id = t.id
         WHERE o.id = ?
     `, [orderId], (err, order) => {
         if (err) return res.status(500).json({ error: err.message });

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Activity, Calendar, FileText, Search, User, Filter, Download, ArrowLeft, DollarSign, Receipt, TrendingUp, X, Check, Clock, Star } from 'lucide-react';
+import { Activity, Wallet, UserCircle, Calendar, FileText, Search, User, Filter, Download, ArrowLeft, DollarSign, Receipt, TrendingUp, X, Check, Clock, Star, Utensils, Banknote, Smartphone, CreditCard, Bike } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 export default function Dashboard() {
@@ -15,6 +15,7 @@ export default function Dashboard() {
   
   // Datos del historial
   const [orders, setOrders] = useState([]);
+  const [shifts, setShifts] = useState([]);
   const [workers, setWorkers] = useState([]);
   const [hourlyData, setHourlyData] = useState([]);
 
@@ -47,6 +48,11 @@ export default function Dashboard() {
         if (data.topProducts) setTopProducts(data.topProducts);
         if (data.orders) setOrders(data.orders);
         if (data.workers) setWorkers(data.workers);
+        
+        fetch(`http://${window.location.hostname}:3000/api/pos/shifts`)
+          .then(res => res.json())
+          .then(shiftsData => setShifts(shiftsData || []))
+          .catch(console.error);
         if (data.chartData) {
           setHourlyData(data.chartData.map(h => ({ name: period === 'day' ? h.name : h.name, ventas: h.sales })));
         }
@@ -103,6 +109,16 @@ export default function Dashboard() {
             }}
           >
             Historial de Búsqueda
+          </button>
+          <button
+            onClick={() => setActiveTab('turnos')}
+            style={{
+              padding: '12px 25px', borderRadius: '12px', border: 'none', fontWeight: '800', fontSize: '16px', cursor: 'pointer', transition: '0.2s',
+              background: activeTab === 'turnos' ? '#10b981' : '#1e293b',
+              color: activeTab === 'turnos' ? '#fff' : '#94a3b8',
+            }}
+          >
+            Arqueos y Turnos
           </button>
         </div>
       </div>
@@ -354,6 +370,69 @@ export default function Dashboard() {
         </div>
       )}
 
+      {/* ===== VISTA: ARQUEOS Y TURNOS ===== */}
+      {activeTab === 'turnos' && (
+        <div style={{ background: '#1e293b', borderRadius: '16px', padding: '25px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}>
+          <h2 style={{ margin: '0 0 20px 0', fontSize: '20px', color: '#f8fafc', display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <Wallet size={24} color="#10b981" /> Control de Turnos de Caja (Cortes Z)
+          </h2>
+          
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '900px' }}>
+              <thead>
+                <tr style={{ borderBottom: '2px solid #334155', color: '#94a3b8', fontSize: '13px', textTransform: 'uppercase' }}>
+                  <th style={{ padding: '15px 10px' }}>Turno ID</th>
+                  <th style={{ padding: '15px 10px' }}>Apertura</th>
+                  <th style={{ padding: '15px 10px' }}>Cierre</th>
+                  <th style={{ padding: '15px 10px' }}>Cajero</th>
+                  <th style={{ padding: '15px 10px' }}>Estado</th>
+                  <th style={{ padding: '15px 10px', textAlign: 'right' }}>Fondo Inicial</th>
+                  <th style={{ padding: '15px 10px', textAlign: 'right' }}>Esperado</th>
+                  <th style={{ padding: '15px 10px', textAlign: 'right' }}>Real</th>
+                  <th style={{ padding: '15px 10px', textAlign: 'right' }}>Descuadre</th>
+                </tr>
+              </thead>
+              <tbody>
+                {shifts.map(s => (
+                  <tr key={s.id} style={{ borderBottom: '1px solid #334155', transition: 'background 0.2s' }}>
+                    <td style={{ padding: '15px 10px', fontWeight: 'bold' }}>#{s.id}</td>
+                    <td style={{ padding: '15px 10px' }}>{new Date(s.opened_at).toLocaleString()}</td>
+                    <td style={{ padding: '15px 10px', color: s.closed_at ? '#94a3b8' : '#38bdf8' }}>
+                      {s.closed_at ? new Date(s.closed_at).toLocaleString() : 'En curso...'}
+                    </td>
+                    <td style={{ padding: '15px 10px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <UserCircle size={16} color="#94a3b8" /> {s.worker_name || 'Desconocido'}
+                      </div>
+                    </td>
+                    <td style={{ padding: '15px 10px' }}>
+                      <span style={{ 
+                        padding: '4px 10px', borderRadius: '20px', fontSize: '12px', fontWeight: 'bold',
+                        background: s.status === 'OPEN' ? 'rgba(56, 189, 248, 0.1)' : 'rgba(16, 185, 129, 0.1)',
+                        color: s.status === 'OPEN' ? '#38bdf8' : '#10b981'
+                      }}>
+                        {s.status === 'OPEN' ? 'ABIERTO' : 'CERRADO'}
+                      </span>
+                    </td>
+                    <td style={{ padding: '15px 10px', textAlign: 'right', color: '#cbd5e1' }}>S/ {s.starting_cash?.toFixed(2)}</td>
+                    <td style={{ padding: '15px 10px', textAlign: 'right', fontWeight: 'bold' }}>S/ {s.expected_cash?.toFixed(2) || '---'}</td>
+                    <td style={{ padding: '15px 10px', textAlign: 'right', fontWeight: 'bold' }}>S/ {s.actual_cash?.toFixed(2) || '---'}</td>
+                    <td style={{ padding: '15px 10px', textAlign: 'right', fontWeight: 'bold', color: s.difference < 0 ? '#ef4444' : s.difference > 0 ? '#10b981' : '#94a3b8' }}>
+                      {s.difference != null ? (s.difference > 0 ? `+S/ ${s.difference.toFixed(2)}` : `S/ ${s.difference.toFixed(2)}`) : '---'}
+                    </td>
+                  </tr>
+                ))}
+                {shifts.length === 0 && (
+                  <tr>
+                    <td colSpan="9" style={{ textAlign: 'center', padding: '30px', color: '#94a3b8' }}>No hay turnos registrados</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
       {/* Modal de Detalle de Recibo */}
       {selectedOrder && (
         <div style={{
@@ -374,11 +453,57 @@ export default function Dashboard() {
               </button>
             </div>
             
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '25px', color: '#cbd5e1', fontSize: '15px' }}>
-              <div><strong>Fecha:</strong> {new Date(selectedOrder.created_at).toLocaleString()}</div>
-              <div><strong>Tipo:</strong> {selectedOrder.order_type}</div>
-              <div><strong>Pago:</strong> {selectedOrder.payment_method}</div>
-              <div><strong>Cajero:</strong> {selectedOrder.worker_name || 'Admin'}</div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '15px', marginBottom: '25px' }}>
+              
+              {/* Fecha */}
+              <div style={{ background: 'rgba(59, 130, 246, 0.1)', border: '1px solid rgba(59, 130, 246, 0.3)', borderRadius: '12px', padding: '12px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div style={{ background: '#3b82f6', color: '#fff', padding: '8px', borderRadius: '8px', display: 'flex' }}><Calendar size={20} /></div>
+                <div>
+                  <div style={{ color: '#94a3b8', fontSize: '11px', fontWeight: 'bold' }}>FECHA Y HORA</div>
+                  <div style={{ color: '#f8fafc', fontWeight: 'bold', fontSize: '13px' }}>{new Date(selectedOrder.created_at).toLocaleString()}</div>
+                </div>
+              </div>
+
+              {/* Cajero */}
+              <div style={{ background: 'rgba(99, 102, 241, 0.1)', border: '1px solid rgba(99, 102, 241, 0.3)', borderRadius: '12px', padding: '12px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div style={{ background: '#6366f1', color: '#fff', padding: '8px', borderRadius: '8px', display: 'flex' }}><User size={20} /></div>
+                <div>
+                  <div style={{ color: '#94a3b8', fontSize: '11px', fontWeight: 'bold' }}>ATENDIDO POR</div>
+                  <div style={{ color: '#f8fafc', fontWeight: 'bold', fontSize: '14px' }}>{selectedOrder.worker_name || 'Admin'}</div>
+                </div>
+              </div>
+
+              {/* Tipo de Orden */}
+              <div style={{ background: 'rgba(245, 158, 11, 0.1)', border: '1px solid rgba(245, 158, 11, 0.3)', borderRadius: '12px', padding: '12px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div style={{ background: '#f59e0b', color: '#fff', padding: '8px', borderRadius: '8px', display: 'flex' }}>
+                  {selectedOrder.order_type === 'LOCAL' ? <Utensils size={20} /> : <Bike size={20} />}
+                </div>
+                <div style={{ overflow: 'hidden' }}>
+                  <div style={{ color: '#94a3b8', fontSize: '11px', fontWeight: 'bold' }}>TIPO DE ORDEN</div>
+                  <div style={{ color: '#f8fafc', fontWeight: 'bold', fontSize: '14px', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>
+                    {selectedOrder.order_type === 'LOCAL' ? (selectedOrder.table_name ? `Local - ${selectedOrder.table_name}` : 'Local') : 'Delivery'}
+                  </div>
+                </div>
+              </div>
+
+              {/* Método de Pago */}
+              <div style={{ 
+                background: selectedOrder.payment_method === 'YAPE' ? 'rgba(168, 85, 247, 0.1)' : selectedOrder.payment_method === 'TARJETA' ? 'rgba(56, 189, 248, 0.1)' : 'rgba(16, 185, 129, 0.1)', 
+                border: `1px solid ${selectedOrder.payment_method === 'YAPE' ? 'rgba(168, 85, 247, 0.3)' : selectedOrder.payment_method === 'TARJETA' ? 'rgba(56, 189, 248, 0.3)' : 'rgba(16, 185, 129, 0.3)'}`, 
+                borderRadius: '12px', padding: '12px', display: 'flex', alignItems: 'center', gap: '10px' 
+              }}>
+                <div style={{ 
+                  background: selectedOrder.payment_method === 'YAPE' ? '#a855f7' : selectedOrder.payment_method === 'TARJETA' ? '#38bdf8' : '#10b981', 
+                  color: '#fff', padding: '8px', borderRadius: '8px', display: 'flex' 
+                }}>
+                  {selectedOrder.payment_method === 'YAPE' ? <Smartphone size={20} /> : selectedOrder.payment_method === 'TARJETA' ? <CreditCard size={20} /> : <Banknote size={20} />}
+                </div>
+                <div>
+                  <div style={{ color: '#94a3b8', fontSize: '11px', fontWeight: 'bold' }}>MÉTODO DE PAGO</div>
+                  <div style={{ color: '#f8fafc', fontWeight: 'bold', fontSize: '14px' }}>{selectedOrder.payment_method}</div>
+                </div>
+              </div>
+
             </div>
 
             <div style={{ background: '#0f172a', borderRadius: '12px', padding: '15px', maxHeight: '250px', overflowY: 'auto' }}>

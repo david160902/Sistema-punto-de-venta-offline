@@ -5,6 +5,7 @@ const { Server } = require('socket.io');
 const path = require('path');
 
 const posRoutes = require('./routes/posRoutes');
+const shiftRoutes = require('./routes/shiftRoutes');
 
 const app = express();
 const server = http.createServer(app);
@@ -33,6 +34,7 @@ app.use((req, res, next) => {
 
 // Configurar Rutas
 app.use('/api/pos', posRoutes);
+app.use('/api/pos/shifts', shiftRoutes);
 
 // Fallback para React Router: Cualquier ruta no reconocida por la API va al index.html
 app.use((req, res) => {
